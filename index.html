@@ -53,18 +53,18 @@
         ". up ."
         "left . right"
         ". down .";
-      gap: 6px;
-      margin-top: 14px;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     .ctrl-btn {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: #e94560;
       color: white;
-      font-size: 1.8rem;
+      font-size: 2.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -135,9 +135,9 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
-  const TILE = 20;
-  const COLS = 17;
-  const ROWS = 17;
+  const TILE = 24;
+  const COLS = 15;
+  const ROWS = 15;
   canvas.width = COLS * TILE;
   canvas.height = ROWS * TILE;
 
@@ -175,7 +175,7 @@
     enemyScoreEl.textContent = 0;
 
     score = 0;
-    speed = 150;
+    speed = 220;
     alive = true;
     scoreEl.textContent = 0;
     placeFood();
@@ -278,7 +278,7 @@
       }
       playerAte = true;
       placeFood();
-      if (speed > 70) {
+      if (speed > 120) {
         speed -= 3;
         clearInterval(gameLoop);
         gameLoop = setInterval(tick, speed);
