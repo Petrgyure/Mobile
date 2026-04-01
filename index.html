@@ -127,7 +127,7 @@
 
 <div id="overlay">
   <h2 id="overlay-title">HAD</h2>
-  <p id="overlay-msg">SBIREJ JABLKA, VYHNI SE STENAM A SOUPEROVI!</p>
+  <p id="overlay-msg">SBIREJ JABLKA, VYHNI SE SOUPEROVI!</p>
   <button id="play-btn">HRAT</button>
 </div>
 
@@ -222,12 +222,13 @@
       const nx = head.x + m.x;
       const ny = head.y + m.y;
 
-      // Skip deadly moves
-      if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
-      if (isOccupied(nx, ny)) continue;
+      // Wrap for AI calculation
+      const wnx = ((nx % COLS) + COLS) % COLS;
+      const wny = ((ny % ROWS) + ROWS) % ROWS;
+      if (isOccupied(wnx, wny)) continue;
 
       // Prefer moves toward food
-      const dist = Math.abs(food.x - nx) + Math.abs(food.y - ny);
+      const dist = Math.abs(food.x - wnx) + Math.abs(food.y - wny);
       const moveScore = -dist;
 
       if (moveScore > bestScore) {
@@ -239,9 +240,9 @@
     // Add some randomness so it's not perfect (kid-friendly difficulty)
     if (bestMove && Math.random() < 0.15) {
       const safeMoves = validMoves.filter(m => {
-        const nx = head.x + m.x;
-        const ny = head.y + m.y;
-        return nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && !isOccupied(nx, ny);
+        const nx = ((head.x + m.x) % COLS + COLS) % COLS;
+        const ny = ((head.y + m.y) % ROWS + ROWS) % ROWS;
+        return !isOccupied(nx, ny);
       });
       if (safeMoves.length > 0) {
         bestMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
@@ -257,9 +258,14 @@
     dir = { ...nextDir };
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-    // Player collision check
-    if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS ||
-        snake.some(s => s.x === head.x && s.y === head.y) ||
+    // Wrap around walls
+    if (head.x < 0) head.x = COLS - 1;
+    if (head.x >= COLS) head.x = 0;
+    if (head.y < 0) head.y = ROWS - 1;
+    if (head.y >= ROWS) head.y = 0;
+
+    // Self or enemy collision
+    if (snake.some(s => s.x === head.x && s.y === head.y) ||
         enemy.some(s => s.x === head.x && s.y === head.y)) {
       gameOver(false);
       return;
@@ -291,9 +297,14 @@
     updateEnemyDir();
     const eHead = { x: enemy[0].x + enemyDir.x, y: enemy[0].y + enemyDir.y };
 
+    // Wrap enemy around walls
+    if (eHead.x < 0) eHead.x = COLS - 1;
+    if (eHead.x >= COLS) eHead.x = 0;
+    if (eHead.y < 0) eHead.y = ROWS - 1;
+    if (eHead.y >= ROWS) eHead.y = 0;
+
     // Enemy collision — enemy dies and respawns
-    if (eHead.x < 0 || eHead.x >= COLS || eHead.y < 0 || eHead.y >= ROWS ||
-        snake.some(s => s.x === eHead.x && s.y === eHead.y) ||
+    if (snake.some(s => s.x === eHead.x && s.y === eHead.y) ||
         enemy.some(s => s.x === eHead.x && s.y === eHead.y)) {
       respawnEnemy();
     } else {
