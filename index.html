@@ -226,7 +226,7 @@
     ctx.font = `${TILE - 2}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🍎', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
+    ctx.fillText('\uD83C\uDF4E', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
 
     // Snake
     snake.forEach((seg, i) => {
@@ -271,7 +271,7 @@
   // ---- Input ----
   function setDir(x, y) {
     if (!alive) return;
-    // Prevent 180° turn
+    // Prevent 180 turn
     if (dir.x === -x && dir.y === -y) return;
     nextDir = { x, y };
   }
