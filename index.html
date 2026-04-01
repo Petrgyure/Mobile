@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Snake Game</title>
+  <title>HAD</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -19,6 +19,7 @@
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;
+      text-transform: uppercase;
     }
 
     h1 {
@@ -35,7 +36,9 @@
       font-size: 1.1rem;
       color: #eee;
     }
-    #score-bar span { font-weight: bold; color: #0f3460; background: #e94560; padding: 4px 14px; border-radius: 20px; }
+    #score-bar span { font-weight: bold; padding: 4px 14px; border-radius: 20px; }
+    .player-score { color: #0f3460; background: #e94560; }
+    .enemy-score { color: #0f3460; background: #5e60ce; }
 
     canvas {
       border: 3px solid #e94560;
@@ -107,10 +110,11 @@
 </head>
 <body>
 
-<h1>Snake</h1>
+<h1>HAD</h1>
 <div id="score-bar">
-  Score: <span id="score">0</span>
-  Best: <span id="best">0</span>
+  TY: <span class="player-score" id="score">0</span>
+  SOUPER: <span class="enemy-score" id="enemy-score">0</span>
+  NEJLEPSI: <span class="player-score" id="best">0</span>
 </div>
 <canvas id="game"></canvas>
 
@@ -122,13 +126,12 @@
 </div>
 
 <div id="overlay">
-  <h2 id="overlay-title">Snake</h2>
-  <p id="overlay-msg">Eat the apples, don't hit the walls!</p>
-  <button id="play-btn">Play</button>
+  <h2 id="overlay-title">HAD</h2>
+  <p id="overlay-msg">SBIREJ JABLKA, VYHNI SE STENAM A SOUPEROVI!</p>
+  <button id="play-btn">HRAT</button>
 </div>
 
 <script>
-  // ---- Setup ----
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
@@ -139,6 +142,7 @@
   canvas.height = ROWS * TILE;
 
   const scoreEl = document.getElementById('score');
+  const enemyScoreEl = document.getElementById('enemy-score');
   const bestEl = document.getElementById('best');
   const overlay = document.getElementById('overlay');
   const overlayTitle = document.getElementById('overlay-title');
@@ -146,11 +150,11 @@
   const playBtn = document.getElementById('play-btn');
 
   let snake, dir, nextDir, food, score, best, speed, gameLoop, alive;
+  let enemy, enemyDir, enemyScore;
 
   best = parseInt(localStorage.getItem('snakeBest') || '0', 10);
   bestEl.textContent = best;
 
-  // ---- Game logic ----
   function init() {
     const mid = Math.floor(COLS / 2);
     snake = [
@@ -160,6 +164,16 @@
     ];
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
+
+    enemy = [
+      { x: mid, y: Math.floor(ROWS / 2) - 4 },
+      { x: mid + 1, y: Math.floor(ROWS / 2) - 4 },
+      { x: mid + 2, y: Math.floor(ROWS / 2) - 4 },
+    ];
+    enemyDir = { x: -1, y: 0 };
+    enemyScore = 0;
+    enemyScoreEl.textContent = 0;
+
     score = 0;
     speed = 150;
     alive = true;
@@ -171,23 +185,89 @@
     let pos;
     do {
       pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-    } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+    } while (
+      snake.some(s => s.x === pos.x && s.y === pos.y) ||
+      enemy.some(s => s.x === pos.x && s.y === pos.y)
+    );
     food = pos;
+  }
+
+  function isOccupied(x, y) {
+    return snake.some(s => s.x === x && s.y === y) ||
+           enemy.some(s => s.x === x && s.y === y);
+  }
+
+  // AI for the enemy snake
+  function updateEnemyDir() {
+    const head = enemy[0];
+    const dx = food.x - head.x;
+    const dy = food.y - head.y;
+
+    // Possible moves
+    const moves = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 },
+    ];
+
+    // Filter out reverse direction
+    const validMoves = moves.filter(m => !(m.x === -enemyDir.x && m.y === -enemyDir.y));
+
+    // Score each move
+    let bestMove = null;
+    let bestScore = -Infinity;
+
+    for (const m of validMoves) {
+      const nx = head.x + m.x;
+      const ny = head.y + m.y;
+
+      // Skip deadly moves
+      if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
+      if (isOccupied(nx, ny)) continue;
+
+      // Prefer moves toward food
+      const dist = Math.abs(food.x - nx) + Math.abs(food.y - ny);
+      const moveScore = -dist;
+
+      if (moveScore > bestScore) {
+        bestScore = moveScore;
+        bestMove = m;
+      }
+    }
+
+    // Add some randomness so it's not perfect (kid-friendly difficulty)
+    if (bestMove && Math.random() < 0.15) {
+      const safeMoves = validMoves.filter(m => {
+        const nx = head.x + m.x;
+        const ny = head.y + m.y;
+        return nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && !isOccupied(nx, ny);
+      });
+      if (safeMoves.length > 0) {
+        bestMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+      }
+    }
+
+    if (bestMove) {
+      enemyDir = bestMove;
+    }
   }
 
   function tick() {
     dir = { ...nextDir };
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-    // Wall or self collision
+    // Player collision check
     if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS ||
-        snake.some(s => s.x === head.x && s.y === head.y)) {
-      gameOver();
+        snake.some(s => s.x === head.x && s.y === head.y) ||
+        enemy.some(s => s.x === head.x && s.y === head.y)) {
+      gameOver(false);
       return;
     }
 
     snake.unshift(head);
 
+    let playerAte = false;
     if (head.x === food.x && head.y === food.y) {
       score++;
       scoreEl.textContent = score;
@@ -196,8 +276,8 @@
         bestEl.textContent = best;
         localStorage.setItem('snakeBest', best);
       }
+      playerAte = true;
       placeFood();
-      // Speed up slightly
       if (speed > 70) {
         speed -= 3;
         clearInterval(gameLoop);
@@ -207,13 +287,59 @@
       snake.pop();
     }
 
+    // Enemy turn
+    updateEnemyDir();
+    const eHead = { x: enemy[0].x + enemyDir.x, y: enemy[0].y + enemyDir.y };
+
+    // Enemy collision — enemy dies and respawns
+    if (eHead.x < 0 || eHead.x >= COLS || eHead.y < 0 || eHead.y >= ROWS ||
+        snake.some(s => s.x === eHead.x && s.y === eHead.y) ||
+        enemy.some(s => s.x === eHead.x && s.y === eHead.y)) {
+      respawnEnemy();
+    } else {
+      enemy.unshift(eHead);
+
+      if (eHead.x === food.x && eHead.y === food.y) {
+        enemyScore++;
+        enemyScoreEl.textContent = enemyScore;
+        placeFood();
+      } else {
+        enemy.pop();
+      }
+    }
+
+    // Check win/lose by score
+    if (score >= 15) {
+      gameOver(true);
+      return;
+    }
+    if (enemyScore >= 15) {
+      gameOver(false);
+      return;
+    }
+
     draw();
+  }
+
+  function respawnEnemy() {
+    // Find a safe spot to respawn
+    let sy;
+    do {
+      sy = Math.floor(Math.random() * (ROWS - 4)) + 2;
+    } while (snake.some(s => s.y === sy && s.x >= 1 && s.x <= 3));
+
+    enemy = [
+      { x: 3, y: sy },
+      { x: 2, y: sy },
+      { x: 1, y: sy },
+    ];
+    enemyDir = { x: 1, y: 0 };
   }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Grid lines (subtle)
+    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     for (let i = 0; i <= COLS; i++) {
       ctx.beginPath(); ctx.moveTo(i * TILE, 0); ctx.lineTo(i * TILE, canvas.height); ctx.stroke();
@@ -222,13 +348,13 @@
       ctx.beginPath(); ctx.moveTo(0, i * TILE); ctx.lineTo(canvas.width, i * TILE); ctx.stroke();
     }
 
-    // Food (apple)
+    // Food
     ctx.font = `${TILE - 2}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🍎', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
+    ctx.fillText('\uD83C\uDF4E', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
 
-    // Snake
+    // Player snake (red/green)
     snake.forEach((seg, i) => {
       const ratio = 1 - i / (snake.length + 5);
       const r = Math.round(46 + 187 * ratio);
@@ -241,7 +367,6 @@
       ctx.roundRect(seg.x * TILE + pad, seg.y * TILE + pad, TILE - pad * 2, TILE - pad * 2, 5);
       ctx.fill();
 
-      // Eyes on head
       if (i === 0) {
         ctx.fillStyle = '#fff';
         const ex = seg.x * TILE + TILE / 2 + dir.x * 4;
@@ -250,14 +375,51 @@
         ctx.beginPath(); ctx.arc(ex + dir.y * 3, ey - dir.x * 3, 2.5, 0, Math.PI * 2); ctx.fill();
       }
     });
+
+    // Enemy snake (purple/blue)
+    enemy.forEach((seg, i) => {
+      const ratio = 1 - i / (enemy.length + 5);
+      const r = Math.round(94 * ratio);
+      const g = Math.round(96 * ratio);
+      const b = Math.round(120 + 136 * ratio);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+      const pad = i === 0 ? 1 : 2;
+      ctx.beginPath();
+      ctx.roundRect(seg.x * TILE + pad, seg.y * TILE + pad, TILE - pad * 2, TILE - pad * 2, 5);
+      ctx.fill();
+
+      if (i === 0) {
+        ctx.fillStyle = '#fff';
+        const ex = seg.x * TILE + TILE / 2 + enemyDir.x * 4;
+        const ey = seg.y * TILE + TILE / 2 + enemyDir.y * 4;
+        ctx.beginPath(); ctx.arc(ex - enemyDir.y * 3, ey + enemyDir.x * 3, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ex + enemyDir.y * 3, ey - enemyDir.x * 3, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+
+    // Score target indicator
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${score}/15  VS  ${enemyScore}/15`, canvas.width / 2, ROWS * TILE - 6);
   }
 
-  function gameOver() {
+  function gameOver(won) {
     alive = false;
     clearInterval(gameLoop);
-    overlayTitle.textContent = 'Game Over!';
-    overlayMsg.textContent = `Score: ${score}`;
-    playBtn.textContent = 'Play Again';
+    if (won) {
+      overlayTitle.textContent = 'VYHRAL JSI!';
+      overlayMsg.textContent = `SKORE: ${score} - SOUPER: ${enemyScore}`;
+    } else {
+      overlayTitle.textContent = 'KONEC HRY!';
+      if (enemyScore >= 15) {
+        overlayMsg.textContent = `SOUPER VYHRAL! ${score} - ${enemyScore}`;
+      } else {
+        overlayMsg.textContent = `SKORE: ${score} - SOUPER: ${enemyScore}`;
+      }
+    }
+    playBtn.textContent = 'HRAT ZNOVU';
     overlay.classList.remove('hidden');
   }
 
@@ -268,15 +430,13 @@
     gameLoop = setInterval(tick, speed);
   }
 
-  // ---- Input ----
+  // Input
   function setDir(x, y) {
     if (!alive) return;
-    // Prevent 180° turn
     if (dir.x === -x && dir.y === -y) return;
     nextDir = { x, y };
   }
 
-  // Keyboard
   document.addEventListener('keydown', e => {
     switch (e.key) {
       case 'ArrowUp':    case 'w': setDir(0, -1); break;
@@ -286,13 +446,11 @@
     }
   });
 
-  // D-pad buttons
   document.getElementById('btn-up').addEventListener('click',    () => setDir(0, -1));
   document.getElementById('btn-down').addEventListener('click',  () => setDir(0,  1));
   document.getElementById('btn-left').addEventListener('click',  () => setDir(-1, 0));
   document.getElementById('btn-right').addEventListener('click', () => setDir(1,  0));
 
-  // Swipe
   let touchStart = null;
   canvas.addEventListener('touchstart', e => {
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -311,7 +469,6 @@
     touchStart = null;
   });
 
-  // Start button
   playBtn.addEventListener('click', start);
 </script>
 </body>
