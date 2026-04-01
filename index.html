@@ -172,6 +172,52 @@
 
     #menu-settings { display: none; }
     #menu-settings.show { display: block; }
+
+    #powerup-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .powerup-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border: 2px solid #ffd600;
+      border-radius: 12px;
+      background: rgba(255, 214, 0, 0.15);
+      color: #ffd600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      text-transform: uppercase;
+      animation: powerup-glow 1s ease-in-out infinite alternate;
+    }
+    @keyframes powerup-glow {
+      from { box-shadow: 0 0 4px rgba(255, 214, 0, 0.3); }
+      to   { box-shadow: 0 0 12px rgba(255, 214, 0, 0.6); }
+    }
+
+    #powerup-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      color: #ffd600;
+      padding: 12px 24px;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #powerup-toast.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -182,6 +228,7 @@
   SOUPER: <span class="enemy-score" id="enemy-score">0</span>
   NEJLEPSI: <span class="player-score" id="best">0</span>
 </div>
+<div id="powerup-bar"></div>
 <canvas id="game"></canvas>
 
 <div id="joystick-area" class="hidden">
@@ -223,6 +270,8 @@
   <button id="play-btn">HRAT</button>
 </div>
 
+<div id="powerup-toast"></div>
+
 <script>
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -254,10 +303,122 @@
   let difficulty = 'novy';
 
   // Level features
-  let portals = [];  // pairs: [{a:{x,y}, b:{x,y}, color}]
-  let walls = [];    // [{x,y}]
+  let portals = [];
+  let walls = [];
   let portalSpawnTimer = 0;
   let wallSpawnTimer = 0;
+
+  // Power-ups
+  const POWERUP_SCORES = [3, 6, 9, 12];
+  let powerups = [];         // available powerups [{type, label, emoji}]
+  let enemyFrozen = 0;       // ticks remaining for freeze
+  let fakeFood = null;        // {x, y} fake fruit position
+  let fakeFoodTicks = 0;      // ticks remaining for fake food
+  let lastPowerupScore = 0;   // track which milestones already awarded
+  const powerupBarEl = document.getElementById('powerup-bar');
+  const powerupToast = document.getElementById('powerup-toast');
+
+  const POWERUP_TYPES = [
+    { type: 'freeze',   label: 'ZMRAZIT',    emoji: '❄️' },
+    { type: 'fake',     label: 'FALEŠNÉ',    emoji: '🍏' },
+    { type: 'teleport', label: 'TELEPORT',   emoji: '⚡' },
+    { type: 'shrink',   label: 'ZKRÁTIT',    emoji: '✂️' },
+    { type: 'speed',    label: 'ZRYCHLIT',   emoji: '🔥' },
+  ];
+
+  function getRandomPowerup() {
+    return POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+  }
+
+  function showToast(text) {
+    powerupToast.textContent = text;
+    powerupToast.classList.add('show');
+    setTimeout(() => powerupToast.classList.remove('show'), 1200);
+  }
+
+  function renderPowerupBar() {
+    powerupBarEl.innerHTML = '';
+    powerups.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'powerup-btn';
+      btn.textContent = `${p.emoji} ${p.label}`;
+      btn.addEventListener('click', () => usePowerup(i));
+      powerupBarEl.appendChild(btn);
+    });
+  }
+
+  function awardPowerup() {
+    const p = getRandomPowerup();
+    powerups.push(p);
+    renderPowerupBar();
+    showToast(`${p.emoji} ${p.label}!`);
+  }
+
+  function usePowerup(index) {
+    if (!alive) return;
+    const p = powerups[index];
+    powerups.splice(index, 1);
+    renderPowerupBar();
+
+    switch (p.type) {
+      case 'freeze':
+        // Freeze enemy for 15 ticks
+        enemyFrozen = 15;
+        showToast('❄️ SOUPER ZMRAZEN!');
+        break;
+
+      case 'fake':
+        // Spawn fake fruit — enemy chases it but gets no score
+        fakeFood = randomFreeCell();
+        fakeFoodTicks = 30;
+        showToast('🍏 FALEŠNÉ OVOCE!');
+        break;
+
+      case 'teleport':
+        // Teleport player head to food position, eat it instantly
+        const oldHead = { ...snake[0] };
+        snake[0].x = food.x;
+        snake[0].y = food.y;
+        score++;
+        scoreEl.textContent = score;
+        if (score > best) {
+          best = score;
+          bestEl.textContent = best;
+          localStorage.setItem('snakeBest', best);
+        }
+        // Grow snake
+        snake.push({ ...snake[snake.length - 1] });
+        prevSnake = snake.map(s => ({ ...s }));
+        placeFood();
+        showToast('⚡ TELEPORT!');
+        checkPowerupMilestone();
+        break;
+
+      case 'shrink':
+        // Shrink enemy to 3 segments
+        while (enemy.length > 3) enemy.pop();
+        prevEnemy = enemy.map(s => ({ ...s }));
+        showToast('✂️ SOUPER ZKRÁCEN!');
+        break;
+
+      case 'speed':
+        // Temporarily make player super fast (lower interval) for 12 ticks
+        speed = Math.max(80, speed - 80);
+        showToast('🔥 TURBO!');
+        // Revert after some time
+        setTimeout(() => { if (alive) speed = Math.max(120, speed + 80); }, 3000);
+        break;
+    }
+  }
+
+  function checkPowerupMilestone() {
+    for (const ms of POWERUP_SCORES) {
+      if (score >= ms && lastPowerupScore < ms) {
+        lastPowerupScore = ms;
+        awardPowerup();
+      }
+    }
+  }
 
   best = parseInt(localStorage.getItem('snakeBest') || '0', 10);
   bestEl.textContent = best;
@@ -378,6 +539,14 @@
     portalSpawnTimer = 0;
     wallSpawnTimer = 0;
 
+    // Reset powerups
+    powerups = [];
+    enemyFrozen = 0;
+    fakeFood = null;
+    fakeFoodTicks = 0;
+    lastPowerupScore = 0;
+    renderPowerupBar();
+
     if (difficulty === 'pokrocily') {
       createStaticPortals();
     } else if (difficulty === 'expert') {
@@ -431,6 +600,8 @@
 
   function updateEnemyDir() {
     const head = enemy[0];
+    // If fake food exists, enemy chases it instead
+    const target = fakeFood || food;
 
     const moves = [
       { x: 1, y: 0 },
@@ -449,7 +620,7 @@
       const wny = ((head.y + m.y) % ROWS + ROWS) % ROWS;
       if (isOccupied(wnx, wny)) continue;
 
-      const dist = Math.abs(food.x - wnx) + Math.abs(food.y - wny);
+      const dist = Math.abs(target.x - wnx) + Math.abs(target.y - wny);
       const moveScore = -dist;
 
       if (moveScore > bestMoveScore) {
@@ -518,9 +689,22 @@
         speed -= 3;
       }
       prevSnake.unshift({ ...prevSnake[0] });
+      checkPowerupMilestone();
     } else {
       snake.pop();
     }
+
+    // Fake food timer
+    if (fakeFood && fakeFoodTicks > 0) {
+      fakeFoodTicks--;
+      if (fakeFoodTicks <= 0) fakeFood = null;
+    }
+
+    // Enemy freeze timer
+    if (enemyFrozen > 0) {
+      enemyFrozen--;
+      // Skip enemy turn while frozen
+    } else {
 
     // Enemy turn
     updateEnemyDir();
@@ -541,7 +725,12 @@
       checkPortal(eHead);
       enemy.unshift(eHead);
 
-      if (eHead.x === food.x && eHead.y === food.y) {
+      // Enemy eats fake food — no score, just removes it
+      if (fakeFood && eHead.x === fakeFood.x && eHead.y === fakeFood.y) {
+        fakeFood = null;
+        fakeFoodTicks = 0;
+        enemy.pop(); // no growth
+      } else if (eHead.x === food.x && eHead.y === food.y) {
         enemyScore++;
         enemyScoreEl.textContent = enemyScore;
         placeFood();
@@ -550,6 +739,8 @@
         enemy.pop();
       }
     }
+
+    } // end enemy turn (if not frozen)
 
     // Expert mode: randomly spawn portals and walls over time
     if (difficulty === 'expert') {
@@ -670,6 +861,14 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('\uD83C\uDF4E', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
 
+    // Fake food (green apple, pulsing)
+    if (fakeFood) {
+      const fakePulse = 0.5 + 0.5 * Math.sin(now / 200);
+      ctx.globalAlpha = fakePulse;
+      ctx.fillText('\uD83C\uDF4F', fakeFood.x * TILE + TILE / 2, fakeFood.y * TILE + TILE / 2 + 1);
+      ctx.globalAlpha = 1;
+    }
+
     // Draw snake helper
     function drawSnake(segments, prev, snakeDir, colorFn) {
       const len = segments.length;
@@ -704,12 +903,21 @@
       return `rgb(${r},${g},${b})`;
     });
 
+    if (enemyFrozen > 0) {
+      ctx.globalAlpha = 0.5;
+    }
     drawSnake(enemy, prevEnemy, enemyDir, ratio => {
+      if (enemyFrozen > 0) {
+        // Icy blue color when frozen
+        const b = Math.round(180 + 75 * ratio);
+        return `rgb(150,200,${b})`;
+      }
       const r = Math.round(94 * ratio);
       const g = Math.round(96 * ratio);
       const b = Math.round(120 + 136 * ratio);
       return `rgb(${r},${g},${b})`;
     });
+    ctx.globalAlpha = 1;
 
     // Score target
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
