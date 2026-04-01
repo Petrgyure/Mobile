@@ -53,6 +53,7 @@
       height: 160px;
       margin-top: 16px;
     }
+    #joystick-area.hidden { display: none; }
 
     #joystick-base {
       position: absolute;
@@ -72,8 +73,41 @@
       box-shadow: 0 4px 12px rgba(233, 69, 96, 0.5);
       left: 48px;
       top: 48px;
-      transition: none;
     }
+
+    #controls {
+      display: grid;
+      grid-template-areas:
+        ". up ."
+        "left . right"
+        ". down .";
+      gap: 8px;
+      margin-top: 16px;
+    }
+    #controls.hidden { display: none; }
+
+    .ctrl-btn {
+      width: 80px;
+      height: 80px;
+      border: none;
+      border-radius: 18px;
+      background: #e94560;
+      color: white;
+      font-size: 2.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 0 #a8324a;
+      transition: transform 0.05s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #a8324a; }
+
+    #btn-up    { grid-area: up; }
+    #btn-left  { grid-area: left; }
+    #btn-right { grid-area: right; }
+    #btn-down  { grid-area: down; }
 
     #overlay {
       position: absolute;
@@ -89,6 +123,39 @@
     #overlay h2 { color: #e94560; font-size: 2.2rem; margin-bottom: 10px; }
     #overlay p  { color: #eee; font-size: 1.2rem; margin-bottom: 20px; }
 
+    .menu-section {
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .menu-section label {
+      color: #aaa;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    .menu-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .menu-btn {
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      border: 2px solid #e94560;
+      border-radius: 14px;
+      background: transparent;
+      color: #eee;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+      text-transform: uppercase;
+    }
+    .menu-btn.active {
+      background: #e94560;
+      color: white;
+    }
+
     #play-btn {
       padding: 14px 48px;
       font-size: 1.3rem;
@@ -99,8 +166,12 @@
       cursor: pointer;
       box-shadow: 0 5px 0 #a8324a;
       -webkit-tap-highlight-color: transparent;
+      margin-top: 6px;
     }
     #play-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #a8324a; }
+
+    #menu-settings { display: none; }
+    #menu-settings.show { display: block; }
   </style>
 </head>
 <body>
@@ -113,14 +184,42 @@
 </div>
 <canvas id="game"></canvas>
 
-<div id="joystick-area">
+<div id="joystick-area" class="hidden">
   <div id="joystick-base"></div>
   <div id="joystick-knob"></div>
+</div>
+
+<div id="controls" class="hidden">
+  <button class="ctrl-btn" id="btn-up">&#9650;</button>
+  <button class="ctrl-btn" id="btn-left">&#9664;</button>
+  <button class="ctrl-btn" id="btn-right">&#9654;</button>
+  <button class="ctrl-btn" id="btn-down">&#9660;</button>
 </div>
 
 <div id="overlay">
   <h2 id="overlay-title">HAD</h2>
   <p id="overlay-msg">SBIREJ JABLKA, VYHNI SE SOUPEROVI!</p>
+
+  <div id="menu-settings" class="show">
+    <div class="menu-section">
+      <label>OVLADANI</label>
+      <div class="menu-row">
+        <button class="menu-btn active" data-ctrl="joystick">JOYSTICK</button>
+        <button class="menu-btn" data-ctrl="dpad">TLACITKA</button>
+        <button class="menu-btn" data-ctrl="swipe">SWIPE</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <label>OBTIZNOST</label>
+      <div class="menu-row">
+        <button class="menu-btn active" data-diff="novy">NOVY</button>
+        <button class="menu-btn" data-diff="pokrocily">POKROCILY</button>
+        <button class="menu-btn" data-diff="expert">EXPERT</button>
+      </div>
+    </div>
+  </div>
+
   <button id="play-btn">HRAT</button>
 </div>
 
@@ -141,16 +240,110 @@
   const overlayTitle = document.getElementById('overlay-title');
   const overlayMsg = document.getElementById('overlay-msg');
   const playBtn = document.getElementById('play-btn');
+  const menuSettings = document.getElementById('menu-settings');
+  const joystickAreaEl = document.getElementById('joystick-area');
+  const controlsEl = document.getElementById('controls');
 
   let snake, dir, nextDir, food, score, best, speed, alive;
   let enemy, enemyDir, enemyScore;
   let lastTick, tickAccum, animFrame;
+  let prevSnake, prevEnemy;
+
+  // Game settings
+  let controlType = 'joystick';
+  let difficulty = 'novy';
+
+  // Level features
+  let portals = [];  // pairs: [{a:{x,y}, b:{x,y}, color}]
+  let walls = [];    // [{x,y}]
+  let portalSpawnTimer = 0;
+  let wallSpawnTimer = 0;
 
   best = parseInt(localStorage.getItem('snakeBest') || '0', 10);
   bestEl.textContent = best;
 
-  // Previous positions for smooth interpolation
-  let prevSnake, prevEnemy;
+  // Menu button handling
+  document.querySelectorAll('.menu-btn[data-ctrl]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.menu-btn[data-ctrl]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      controlType = btn.dataset.ctrl;
+    });
+  });
+
+  document.querySelectorAll('.menu-btn[data-diff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.menu-btn[data-diff]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.diff;
+    });
+  });
+
+  const PORTAL_COLORS = [
+    ['#00e5ff', '#00b8d4'],
+    ['#ff9100', '#e65100'],
+    ['#76ff03', '#64dd17'],
+    ['#ea80fc', '#aa00ff'],
+    ['#ffd600', '#f9a825'],
+  ];
+
+  function randomFreeCell() {
+    let pos;
+    let tries = 0;
+    do {
+      pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+      tries++;
+    } while (tries < 200 && (
+      snake.some(s => s.x === pos.x && s.y === pos.y) ||
+      enemy.some(s => s.x === pos.x && s.y === pos.y) ||
+      walls.some(w => w.x === pos.x && w.y === pos.y) ||
+      portals.some(p => (p.a.x === pos.x && p.a.y === pos.y) || (p.b.x === pos.x && p.b.y === pos.y)) ||
+      (food && food.x === pos.x && food.y === pos.y)
+    ));
+    return pos;
+  }
+
+  function createStaticPortals() {
+    portals = [];
+    // Place 3 portal pairs for pokrocily
+    const pairs = 3;
+    for (let i = 0; i < pairs; i++) {
+      const a = randomFreeCell();
+      const b = randomFreeCell();
+      portals.push({ a, b, color: PORTAL_COLORS[i % PORTAL_COLORS.length] });
+    }
+  }
+
+  function createExpertWalls() {
+    walls = [];
+    // Place some initial random walls
+    const count = 8 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < count; i++) {
+      const w = randomFreeCell();
+      walls.push(w);
+    }
+  }
+
+  function spawnRandomPortal() {
+    if (portals.length >= 5) {
+      // Remove oldest
+      portals.shift();
+    }
+    const a = randomFreeCell();
+    const b = randomFreeCell();
+    portals.push({ a, b, color: PORTAL_COLORS[portals.length % PORTAL_COLORS.length] });
+  }
+
+  function spawnRandomWalls() {
+    // Add 2-4 walls, remove some old ones if too many
+    if (walls.length > 20) {
+      walls.splice(0, 3);
+    }
+    const count = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      walls.push(randomFreeCell());
+    }
+  }
 
   function init() {
     const mid = Math.floor(COLS / 2);
@@ -179,23 +372,61 @@
     scoreEl.textContent = 0;
     lastTick = 0;
     tickAccum = 0;
+
+    portals = [];
+    walls = [];
+    portalSpawnTimer = 0;
+    wallSpawnTimer = 0;
+
+    if (difficulty === 'pokrocily') {
+      createStaticPortals();
+    } else if (difficulty === 'expert') {
+      createStaticPortals();
+      createExpertWalls();
+    }
+
     placeFood();
   }
 
   function placeFood() {
     let pos;
+    let tries = 0;
     do {
       pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-    } while (
+      tries++;
+    } while (tries < 200 && (
       snake.some(s => s.x === pos.x && s.y === pos.y) ||
-      enemy.some(s => s.x === pos.x && s.y === pos.y)
-    );
+      enemy.some(s => s.x === pos.x && s.y === pos.y) ||
+      walls.some(w => w.x === pos.x && w.y === pos.y) ||
+      portals.some(p => (p.a.x === pos.x && p.a.y === pos.y) || (p.b.x === pos.x && p.b.y === pos.y))
+    ));
     food = pos;
   }
 
   function isOccupied(x, y) {
     return snake.some(s => s.x === x && s.y === y) ||
-           enemy.some(s => s.x === x && s.y === y);
+           enemy.some(s => s.x === x && s.y === y) ||
+           walls.some(w => w.x === x && w.y === y);
+  }
+
+  function checkPortal(pos) {
+    for (const p of portals) {
+      if (p.a.x === pos.x && p.a.y === pos.y) {
+        pos.x = p.b.x;
+        pos.y = p.b.y;
+        return true;
+      }
+      if (p.b.x === pos.x && p.b.y === pos.y) {
+        pos.x = p.a.x;
+        pos.y = p.a.y;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isWall(x, y) {
+    return walls.some(w => w.x === x && w.y === y);
   }
 
   function updateEnemyDir() {
@@ -211,7 +442,7 @@
     const validMoves = moves.filter(m => !(m.x === -enemyDir.x && m.y === -enemyDir.y));
 
     let bestMove = null;
-    let bestScore = -Infinity;
+    let bestMoveScore = -Infinity;
 
     for (const m of validMoves) {
       const wnx = ((head.x + m.x) % COLS + COLS) % COLS;
@@ -221,8 +452,8 @@
       const dist = Math.abs(food.x - wnx) + Math.abs(food.y - wny);
       const moveScore = -dist;
 
-      if (moveScore > bestScore) {
-        bestScore = moveScore;
+      if (moveScore > bestMoveScore) {
+        bestMoveScore = moveScore;
         bestMove = m;
       }
     }
@@ -244,7 +475,6 @@
   }
 
   function tick() {
-    // Save previous positions for interpolation
     prevSnake = snake.map(s => ({ ...s }));
     prevEnemy = enemy.map(s => ({ ...s }));
 
@@ -256,6 +486,15 @@
     if (head.x >= COLS) head.x = 0;
     if (head.y < 0) head.y = ROWS - 1;
     if (head.y >= ROWS) head.y = 0;
+
+    // Hit a wall block
+    if (isWall(head.x, head.y)) {
+      gameOver(false);
+      return;
+    }
+
+    // Check portal
+    checkPortal(head);
 
     // Self or enemy collision
     if (snake.some(s => s.x === head.x && s.y === head.y) ||
@@ -278,7 +517,6 @@
       if (speed > 120) {
         speed -= 3;
       }
-      // Pad prevSnake to match new length
       prevSnake.unshift({ ...prevSnake[0] });
     } else {
       snake.pop();
@@ -288,17 +526,19 @@
     updateEnemyDir();
     const eHead = { x: enemy[0].x + enemyDir.x, y: enemy[0].y + enemyDir.y };
 
-    // Wrap enemy
     if (eHead.x < 0) eHead.x = COLS - 1;
     if (eHead.x >= COLS) eHead.x = 0;
     if (eHead.y < 0) eHead.y = ROWS - 1;
     if (eHead.y >= ROWS) eHead.y = 0;
 
-    if (snake.some(s => s.x === eHead.x && s.y === eHead.y) ||
+    // Enemy hits wall or collision — respawn
+    if (isWall(eHead.x, eHead.y) ||
+        snake.some(s => s.x === eHead.x && s.y === eHead.y) ||
         enemy.some(s => s.x === eHead.x && s.y === eHead.y)) {
       respawnEnemy();
       prevEnemy = enemy.map(s => ({ ...s }));
     } else {
+      checkPortal(eHead);
       enemy.unshift(eHead);
 
       if (eHead.x === food.x && eHead.y === food.y) {
@@ -308,6 +548,20 @@
         prevEnemy.unshift({ ...prevEnemy[0] });
       } else {
         enemy.pop();
+      }
+    }
+
+    // Expert mode: randomly spawn portals and walls over time
+    if (difficulty === 'expert') {
+      portalSpawnTimer++;
+      wallSpawnTimer++;
+      if (portalSpawnTimer >= 25) {
+        portalSpawnTimer = 0;
+        spawnRandomPortal();
+      }
+      if (wallSpawnTimer >= 15) {
+        wallSpawnTimer = 0;
+        spawnRandomWalls();
       }
     }
 
@@ -322,22 +576,25 @@
   }
 
   function respawnEnemy() {
-    let sy;
+    let sy, sx;
+    let tries = 0;
     do {
+      sx = Math.floor(Math.random() * (COLS - 4)) + 2;
       sy = Math.floor(Math.random() * (ROWS - 4)) + 2;
-    } while (snake.some(s => s.y === sy && s.x >= 1 && s.x <= 3));
+      tries++;
+    } while (tries < 100 && (
+      isOccupied(sx, sy) || isOccupied(sx - 1, sy) || isOccupied(sx - 2, sy)
+    ));
 
     enemy = [
-      { x: 3, y: sy },
-      { x: 2, y: sy },
-      { x: 1, y: sy },
+      { x: sx, y: sy },
+      { x: sx - 1, y: sy },
+      { x: sx - 2, y: sy },
     ];
     enemyDir = { x: 1, y: 0 };
   }
 
-  // Smooth interpolation helper
   function lerp(a, b, t) {
-    // Handle wrap-around: if distance > half the grid, don't interpolate
     const dx = b - a;
     if (Math.abs(dx) > 2) return b;
     return a + dx * t;
@@ -355,13 +612,65 @@
       ctx.beginPath(); ctx.moveTo(0, i * TILE); ctx.lineTo(canvas.width, i * TILE); ctx.stroke();
     }
 
+    // Walls
+    for (const w of walls) {
+      ctx.fillStyle = '#4a4e69';
+      ctx.beginPath();
+      ctx.roundRect(w.x * TILE + 1, w.y * TILE + 1, TILE - 2, TILE - 2, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#6c757d';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Portals
+    const now = Date.now();
+    for (const p of portals) {
+      const pulse = 0.6 + 0.4 * Math.sin(now / 300);
+      // Portal A
+      ctx.fillStyle = p.color[0];
+      ctx.globalAlpha = pulse;
+      ctx.beginPath();
+      ctx.arc(p.a.x * TILE + TILE / 2, p.a.y * TILE + TILE / 2, TILE / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Inner glow
+      ctx.fillStyle = p.color[1];
+      ctx.beginPath();
+      ctx.arc(p.a.x * TILE + TILE / 2, p.a.y * TILE + TILE / 2, TILE / 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Portal B
+      ctx.fillStyle = p.color[0];
+      ctx.beginPath();
+      ctx.arc(p.b.x * TILE + TILE / 2, p.b.y * TILE + TILE / 2, TILE / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = p.color[1];
+      ctx.beginPath();
+      ctx.arc(p.b.x * TILE + TILE / 2, p.b.y * TILE + TILE / 2, TILE / 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalAlpha = 1;
+
+      // Draw line connecting portals (subtle)
+      ctx.strokeStyle = p.color[0];
+      ctx.globalAlpha = 0.1;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(p.a.x * TILE + TILE / 2, p.a.y * TILE + TILE / 2);
+      ctx.lineTo(p.b.x * TILE + TILE / 2, p.b.y * TILE + TILE / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+
     // Food
     ctx.font = `${TILE - 2}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('\uD83C\uDF4E', food.x * TILE + TILE / 2, food.y * TILE + TILE / 2 + 1);
 
-    // Draw snake with interpolation
+    // Draw snake helper
     function drawSnake(segments, prev, snakeDir, colorFn) {
       const len = segments.length;
       for (let i = 0; i < len; i++) {
@@ -371,15 +680,13 @@
         const sy = lerp(prv.y, cur.y, t) * TILE;
 
         const ratio = 1 - i / (len + 5);
-        const col = colorFn(ratio);
-        ctx.fillStyle = col;
+        ctx.fillStyle = colorFn(ratio);
 
         const pad = i === 0 ? 1 : 2;
         ctx.beginPath();
         ctx.roundRect(sx + pad, sy + pad, TILE - pad * 2, TILE - pad * 2, 5);
         ctx.fill();
 
-        // Eyes on head
         if (i === 0) {
           ctx.fillStyle = '#fff';
           const ex = sx + TILE / 2 + snakeDir.x * 4;
@@ -390,7 +697,6 @@
       }
     }
 
-    // Player snake (red/green)
     drawSnake(snake, prevSnake, dir, ratio => {
       const r = Math.round(46 + 187 * ratio);
       const g = Math.round(204 * (1 - ratio));
@@ -398,7 +704,6 @@
       return `rgb(${r},${g},${b})`;
     });
 
-    // Enemy snake (purple/blue)
     drawSnake(enemy, prevEnemy, enemyDir, ratio => {
       const r = Math.round(94 * ratio);
       const g = Math.round(96 * ratio);
@@ -411,6 +716,10 @@
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`${score}/15  VS  ${enemyScore}/15`, canvas.width / 2, ROWS * TILE - 6);
+
+    // Difficulty label
+    const diffLabel = difficulty === 'novy' ? 'NOVY' : difficulty === 'pokrocily' ? 'POKROCILY' : 'EXPERT';
+    ctx.fillText(diffLabel, canvas.width / 2, 12);
   }
 
   function gameOver(won) {
@@ -428,11 +737,11 @@
       }
     }
     playBtn.textContent = 'HRAT ZNOVU';
+    menuSettings.classList.add('show');
     overlay.classList.remove('hidden');
   }
 
-  // Game loop using requestAnimationFrame for smooth rendering
-  function gameLoop(timestamp) {
+  function loopGame(timestamp) {
     if (!alive) return;
 
     if (!lastTick) lastTick = timestamp;
@@ -446,20 +755,31 @@
       tickAccum -= speed;
     }
 
-    // Interpolation factor (0 to 1 between ticks)
     const t = Math.min(tickAccum / speed, 1);
     draw(t);
 
-    animFrame = requestAnimationFrame(gameLoop);
+    animFrame = requestAnimationFrame(loopGame);
   }
 
   function start() {
     overlay.classList.add('hidden');
+    menuSettings.classList.remove('show');
+
+    // Show correct controller
+    joystickAreaEl.classList.add('hidden');
+    controlsEl.classList.add('hidden');
+    if (controlType === 'joystick') {
+      joystickAreaEl.classList.remove('hidden');
+    } else if (controlType === 'dpad') {
+      controlsEl.classList.remove('hidden');
+    }
+    // swipe = no visible controller
+
     init();
     draw(1);
     lastTick = 0;
     tickAccum = 0;
-    animFrame = requestAnimationFrame(gameLoop);
+    animFrame = requestAnimationFrame(loopGame);
   }
 
   // Input
@@ -479,6 +799,12 @@
     }
   });
 
+  // D-pad
+  document.getElementById('btn-up').addEventListener('click',    () => setDir(0, -1));
+  document.getElementById('btn-down').addEventListener('click',  () => setDir(0,  1));
+  document.getElementById('btn-left').addEventListener('click',  () => setDir(-1, 0));
+  document.getElementById('btn-right').addEventListener('click', () => setDir(1,  0));
+
   // Joystick
   const joystickArea = document.getElementById('joystick-area');
   const joystickKnob = document.getElementById('joystick-knob');
@@ -496,7 +822,6 @@
     let dy = clientY - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Clamp to max radius
     if (dist > KNOB_MAX) {
       dx = dx / dist * KNOB_MAX;
       dy = dy / dist * KNOB_MAX;
@@ -505,7 +830,6 @@
     joystickKnob.style.left = (KNOB_REST_X + dx) + 'px';
     joystickKnob.style.top = (KNOB_REST_Y + dy) + 'px';
 
-    // Only register direction if pushed far enough
     if (dist > 15) {
       if (Math.abs(dx) > Math.abs(dy)) {
         setDir(dx > 0 ? 1 : -1, 0);
@@ -541,15 +865,11 @@
 
   joystickArea.addEventListener('touchend', e => {
     for (const touch of e.changedTouches) {
-      if (touch.identifier === joystickTouchId) {
-        resetJoystick();
-      }
+      if (touch.identifier === joystickTouchId) resetJoystick();
     }
   });
-
   joystickArea.addEventListener('touchcancel', resetJoystick);
 
-  // Mouse support for joystick (desktop testing)
   joystickArea.addEventListener('mousedown', e => {
     joystickActive = true;
     handleJoystick(e.clientX, e.clientY);
@@ -561,7 +881,7 @@
     if (joystickActive) resetJoystick();
   });
 
-  // Swipe on canvas still works
+  // Swipe on canvas
   let touchStart = null;
   canvas.addEventListener('touchstart', e => {
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
