@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omalovánky</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Comic Sans MS', 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #2c3e50;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #ffffff;
+      text-shadow: 3px 3px 0 #e94560, 6px 6px 0 rgba(0, 0, 0, 0.15);
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 1.4rem;
+      color: #ffffff;
+      margin-top: 8px;
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 14px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: 5px solid transparent;
+      text-align: center;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+    }
+
+    .card.selected {
+      border-color: #e94560;
+      background: #fff8e1;
+    }
+
+    .card svg {
+      width: 100%;
+      height: 130px;
+      display: block;
+    }
+
+    .card-name {
+      margin-top: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .preview {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+      text-align: center;
+    }
+
+    .preview h2 {
+      font-size: 1.8rem;
+      margin-bottom: 14px;
+      color: #2c3e50;
+    }
+
+    .preview-svg-wrap {
+      background: #ffffff;
+      border: 3px dashed #ffb74d;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 0 auto 20px;
+      max-width: 480px;
+    }
+
+    .preview-svg-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    button.download {
+      font-family: inherit;
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #ffffff;
+      background: #e94560;
+      border: none;
+      border-radius: 50px;
+      padding: 18px 40px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #b3324a, 0 10px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      letter-spacing: 1px;
+    }
+
+    button.download:hover {
+      transform: translateY(2px);
+      box-shadow: 0 4px 0 #b3324a, 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    button.download:active {
+      transform: translateY(6px);
+      box-shadow: 0 0 0 #b3324a, 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    button.download:disabled {
+      background: #aaa;
+      box-shadow: none;
+      cursor: wait;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2.2rem; }
+      .subtitle { font-size: 1.1rem; }
+      button.download { font-size: 1.3rem; padding: 14px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>OMALOVÁNKY</h1>
+      <p class="subtitle">Vyber obrázek a vytiskni si ho!</p>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="preview">
+      <h2 id="preview-title">Dinosaurus</h2>
+      <div class="preview-svg-wrap" id="preview-svg-wrap"></div>
+      <button class="download" id="download-btn">Stáhnout PDF</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script>
+    // ----- SVG line-art templates (black outlines for coloring) -----
+    const SVG_ATTRS = 'xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"';
+    const G_OPEN = '<g stroke="#000" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">';
+    const G_CLOSE = '</g>';
+
+    const themes = {
+      dinosaurus: {
+        name: 'Dinosaurus',
+        body: `
+          <ellipse cx="200" cy="220" rx="120" ry="60" />
+          <ellipse cx="310" cy="160" rx="55" ry="40" />
+          <path d="M 240 180 Q 250 210 280 200" />
+          <circle cx="325" cy="150" r="5" fill="#000" />
+          <path d="M 280 175 Q 320 188 360 170" />
+          <path d="M 290 178 L 293 188 L 296 178 L 299 188 L 302 178 L 305 188 L 308 178" />
+          <path d="M 250 270 L 245 325 L 275 325 L 270 270" />
+          <path d="M 150 270 L 138 332 L 178 332 L 172 270" />
+          <path d="M 80 215 Q 25 195 15 250 Q 35 240 65 235" />
+          <path d="M 130 165 L 140 145 L 150 165 L 160 145 L 170 165 L 180 145 L 190 165 L 200 145 L 210 165 L 220 145 L 230 165" />
+          <path d="M 160 240 Q 180 255 200 240" />
+          <path d="M 150 260 Q 170 275 190 260" />
+        `
+      },
+      auto: {
+        name: 'Auto',
+        body: `
+          <path d="M 40 250 L 60 200 L 130 200 L 170 150 L 280 150 L 320 200 L 360 200 L 360 260 L 40 260 Z" />
+          <path d="M 145 195 L 175 160 L 250 160 L 275 195 Z" />
+          <path d="M 200 160 L 200 195" />
+          <circle cx="110" cy="270" r="38" />
+          <circle cx="110" cy="270" r="14" />
+          <path d="M 110 232 L 110 250 M 110 290 L 110 308 M 72 270 L 90 270 M 130 270 L 148 270" />
+          <circle cx="290" cy="270" r="38" />
+          <circle cx="290" cy="270" r="14" />
+          <path d="M 290 232 L 290 250 M 290 290 L 290 308 M 252 270 L 270 270 M 310 270 L 328 270" />
+          <circle cx="50" cy="220" r="8" />
+          <circle cx="350" cy="220" r="8" />
+          <path d="M 80 230 L 320 230" />
+        `
+      },
+      raketa: {
+        name: 'Raketa',
+        body: `
+          <path d="M 200 50 Q 245 100 245 155 L 155 155 Q 155 100 200 50 Z" />
+          <path d="M 155 155 L 155 280 L 245 280 L 245 155 Z" />
+          <circle cx="200" cy="180" r="28" />
+          <circle cx="200" cy="180" r="16" />
+          <path d="M 155 230 L 100 295 L 155 295 Z" />
+          <path d="M 245 230 L 300 295 L 245 295 Z" />
+          <path d="M 155 280 L 155 305 L 245 305 L 245 280" />
+          <path d="M 170 215 L 230 215" />
+          <path d="M 170 250 L 230 250" />
+          <path d="M 170 310 Q 175 360 188 320 Q 200 370 212 320 Q 225 360 230 310" />
+          <path d="M 60 110 L 80 110 M 70 100 L 70 120" />
+          <path d="M 320 80 L 340 80 M 330 70 L 330 90" />
+          <path d="M 80 220 L 95 220 M 87 213 L 87 227" />
+          <path d="M 320 230 L 335 230 M 327 223 L 327 237" />
+          <path d="M 60 320 L 75 320 M 67 313 L 67 327" />
+        `
+      },
+      bagr: {
+        name: 'Bagr',
+        body: `
+          <rect x="55" y="280" width="290" height="55" rx="27" />
+          <circle cx="95" cy="307" r="16" />
+          <circle cx="155" cy="307" r="16" />
+          <circle cx="215" cy="307" r="16" />
+          <circle cx="275" cy="307" r="16" />
+          <circle cx="305" cy="307" r="6" fill="#000" />
+          <path d="M 95 200 L 95 280 L 250 280 L 250 200 Z" />
+          <path d="M 115 215 L 115 265 L 230 265 L 230 215 Z" />
+          <path d="M 170 215 L 170 265" />
+          <circle cx="250" cy="240" r="9" />
+          <path d="M 250 240 L 320 160" />
+          <path d="M 257 246 L 327 166" />
+          <circle cx="324" cy="163" r="7" />
+          <path d="M 324 163 L 360 222" />
+          <path d="M 330 158 L 366 217" />
+          <path d="M 348 220 L 385 215 L 388 250 L 360 262 L 348 240 Z" />
+          <path d="M 360 262 L 363 272 L 367 262 L 371 272 L 375 262 L 379 272 L 383 262" />
+          <path d="M 100 200 L 100 175 L 245 175 L 245 200" />
+        `
+      },
+      zralok: {
+        name: 'Žralok',
+        body: `
+          <path d="M 50 205
+                   Q 70 145 160 138
+                   Q 260 130 320 175
+                   L 365 140
+                   L 350 205
+                   L 365 270
+                   L 320 235
+                   Q 260 280 160 272
+                   Q 70 265 50 205 Z" />
+          <circle cx="105" cy="190" r="6" fill="#000" />
+          <path d="M 60 220 Q 85 230 120 222" />
+          <path d="M 72 222 L 75 232 L 78 222 L 81 232 L 84 222 L 87 232 L 90 222 L 93 232 L 96 222 L 99 232 L 102 222" />
+          <path d="M 140 178 Q 145 205 140 232" />
+          <path d="M 158 178 Q 163 205 158 232" />
+          <path d="M 176 178 Q 181 205 176 232" />
+          <path d="M 195 145 L 230 80 L 250 150" />
+          <path d="M 215 265 L 235 315 L 260 270" />
+          <path d="M 140 235 L 110 295 L 175 255" />
+          <path d="M 50 205 L 350 205" />
+        `
+      },
+      hrad: {
+        name: 'Hrad',
+        body: `
+          <path d="M 55 350 L 55 130 L 135 130 L 135 350 Z" />
+          <path d="M 55 130 L 55 108 L 75 108 L 75 130 M 85 130 L 85 108 L 105 108 L 105 130 M 115 130 L 115 108 L 135 108 L 135 130" />
+          <path d="M 78 175 L 78 215 Q 95 195 112 215 L 112 175 Z" />
+          <path d="M 95 175 L 95 215" />
+          <path d="M 78 250 L 78 285 L 112 285 L 112 250 Z" />
+          <path d="M 265 350 L 265 130 L 345 130 L 345 350 Z" />
+          <path d="M 265 130 L 265 108 L 285 108 L 285 130 M 295 130 L 295 108 L 315 108 L 315 130 M 325 130 L 325 108 L 345 108 L 345 130" />
+          <path d="M 288 175 L 288 215 Q 305 195 322 215 L 322 175 Z" />
+          <path d="M 305 175 L 305 215" />
+          <path d="M 288 250 L 288 285 L 322 285 L 322 250 Z" />
+          <path d="M 135 350 L 135 200 L 265 200 L 265 350" />
+          <path d="M 135 200 L 135 180 L 152 180 L 152 200 M 162 200 L 162 180 L 179 180 L 179 200 M 189 200 L 189 180 L 206 180 L 206 200 M 216 200 L 216 180 L 233 180 L 233 200 M 243 200 L 243 180 L 260 180 L 260 200" />
+          <path d="M 168 350 L 168 270 Q 200 245 232 270 L 232 350" />
+          <path d="M 200 250 L 200 350" />
+          <path d="M 175 290 L 195 290 M 205 290 L 225 290" />
+          <path d="M 95 108 L 95 65" />
+          <path d="M 95 65 L 130 75 L 95 85 Z" />
+          <path d="M 305 108 L 305 65" />
+          <path d="M 305 65 L 340 75 L 305 85 Z" />
+        `
+      }
+    };
+
+    // ----- Build full SVG markup from a theme template -----
+    function buildSvg(theme) {
+      return `<svg ${SVG_ATTRS}>${G_OPEN}${theme.body}${G_CLOSE}</svg>`;
+    }
+
+    // ----- State -----
+    let selectedKey = 'dinosaurus';
+
+    // ----- Render thumbnails -----
+    const grid = document.getElementById('grid');
+    Object.entries(themes).forEach(([key, theme]) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.key = key;
+      card.innerHTML = buildSvg(theme) + `<div class="card-name">${theme.name}</div>`;
+      card.addEventListener('click', () => selectTheme(key));
+      grid.appendChild(card);
+    });
+
+    function selectTheme(key) {
+      selectedKey = key;
+      document.querySelectorAll('.card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.key === key);
+      });
+      const theme = themes[key];
+      document.getElementById('preview-title').textContent = theme.name;
+      document.getElementById('preview-svg-wrap').innerHTML = buildSvg(theme);
+    }
+
+    // ----- PDF generation -----
+    async function generatePDF() {
+      const btn = document.getElementById('download-btn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Připravuji...';
+
+      try {
+        const theme = themes[selectedKey];
+        const svgString = buildSvg(theme);
+
+        // Rasterize SVG -> high-res PNG
+        const png = await svgToPng(svgString, 1800);
+
+        // jsPDF: A4 portrait (210 x 297 mm)
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // Title (top, centered)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.text(theme.name.toUpperCase(), 105, 25, { align: 'center' });
+
+        // Decorative line under title
+        doc.setLineWidth(0.8);
+        doc.line(60, 32, 150, 32);
+
+        // Image: 170 x 170 mm centered horizontally, below title
+        const imgSize = 170;
+        const x = (210 - imgSize) / 2;
+        const y = 50;
+        doc.addImage(png, 'PNG', x, y, imgSize, imgSize);
+
+        // Footer hint
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.text('Vybarvi mě!', 105, 270, { align: 'center' });
+
+        doc.save(`omalovanky-${selectedKey}.pdf`);
+      } catch (err) {
+        alert('Chyba při vytváření PDF: ' + err.message);
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    function svgToPng(svgString, size) {
+      return new Promise((resolve, reject) => {
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = (e) => {
+          URL.revokeObjectURL(url);
+          reject(new Error('SVG render failed'));
+        };
+        img.src = url;
+      });
+    }
+
+    document.getElementById('download-btn').addEventListener('click', generatePDF);
+
+    // ----- Init -----
+    selectTheme('dinosaurus');
+  </script>
+</body>
+</html>
