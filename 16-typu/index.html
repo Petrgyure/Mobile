@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#10232b">
+<title>Test 16 typů</title>
+<style>
+  :root {
+    --bg: #f3f6f5; --card: #ffffff; --text: #17262b; --muted: #637277; --line: #dde5e3;
+    --accent: #0f8a7a; --accent-soft: #e0f3ef; --accent-text: #ffffff;
+    --warn-bg: #fff4dc; --warn-text: #7a5300; --bar: #0f8a7a; --bar-other: #e7a33c;
+    --shadow: 0 1px 2px rgba(10,30,30,.06), 0 6px 24px rgba(10,30,30,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10232b; --card: #18323c; --text: #e7f1ef; --muted: #9db3b1; --line: #29505a;
+      --accent: #4fd1bd; --accent-soft: #1f4a50; --accent-text: #10232b;
+      --warn-bg: #3a2f12; --warn-text: #f3d48a; --bar: #4fd1bd; --bar-other: #f0b75c;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10232b; --card: #18323c; --text: #e7f1ef; --muted: #9db3b1; --line: #29505a;
+    --accent: #4fd1bd; --accent-soft: #1f4a50; --accent-text: #10232b;
+    --warn-bg: #3a2f12; --warn-text: #f3d48a; --bar: #4fd1bd; --bar-other: #f0b75c;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); }
+  body {
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100dvh; display: flex; justify-content: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  }
+  main { width: 100%; max-width: 560px; display: flex; flex-direction: column; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin-bottom: 12px; }
+  h2 { font-size: 1.25rem; line-height: 1.3; margin: 0 0 10px; }
+  p { margin-bottom: 10px; }
+  .muted { color: var(--muted); font-size: .92rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px 18px; min-height: 52px; font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-text); }
+  .btn.secondary { background: var(--accent-soft); color: var(--text); }
+  .btn.ghost { background: transparent; color: var(--muted); font-weight: 500; }
+  .btn + .btn { margin-top: 10px; }
+  .btn:focus-visible, .scale button:focus-visible, .back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .hidden { display: none !important; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .back { border: 0; background: var(--accent-soft); color: var(--text); width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; cursor: pointer; flex: none; }
+  .back:disabled { opacity: .35; }
+  .progress { flex: 1; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .progress div { height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .count { font-size: .85rem; color: var(--muted); min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+  .section { font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .statement { font-size: 1.3rem; line-height: 1.4; font-weight: 600; min-height: 5.6em; display: flex; align-items: center; }
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; }
+  .scale button { border: 2px solid var(--line); background: var(--card); color: var(--text); border-radius: 14px; height: 60px; font: inherit; font-size: 1.25rem; font-weight: 700; cursor: pointer; }
+  .scale button.sel { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .scale-labels { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-top: 6px; }
+  .hero { text-align: center; padding: 26px 20px; }
+  .code { font-size: 3rem; font-weight: 800; letter-spacing: .08em; color: var(--accent); line-height: 1.1; }
+  .hero h2 { font-size: 1.5rem; margin: 6px 0 4px; }
+  .axis { margin-bottom: 16px; }
+  .axis:last-child { margin-bottom: 0; }
+  .axis-head { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: 4px; }
+  .axis-head .win { font-weight: 700; color: var(--accent); }
+  .axis-bar { position: relative; height: 14px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .axis-bar div { position: absolute; top: 0; bottom: 0; background: var(--bar); }
+  .axis-bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--card); }
+  .axis-note { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 14px; padding: 12px 14px; font-size: .92rem; margin-bottom: 8px; }
+  dl { display: grid; gap: 10px; }
+  dt { font-weight: 700; font-size: .9rem; color: var(--accent); }
+  dd { margin: 0; }
+  details { border-top: 1px solid var(--line); padding: 12px 0; }
+  details:last-child { padding-bottom: 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--accent); font-weight: 700; }
+  details[open] summary::after { content: "–"; }
+  details dl { margin-top: 10px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+  <section id="s-intro">
+    <div class="card">
+      <h1>Test 16 typů osobnosti</h1>
+      <p>Test vychází z Jungovy typologie a zjišťuje tvé preference ve <b>4 oblastech</b>:</p>
+      <p>• kde čerpáš energii (<b>E</b>xtraverze / <b>I</b>ntroverze)<br>
+         • jak vnímáš informace (<b>S</b>myslové vnímání / i<b>N</b>tuice)<br>
+         • jak se rozhoduješ (<b>T</b> myšlení / <b>F</b> cítění)<br>
+         • jak si organizuješ život (<b>J</b> plánování / <b>P</b> otevřenost)</p>
+      <p><b>48 výroků</b>, asi 6–8 minut. Postup se ukládá jen v tomto zařízení.</p>
+      <p class="muted">Odpovídej podle toho, jak to máš přirozeně, ne jak to „má být“ v práci. Žádná odpověď není lepší ani horší.</p>
+    </div>
+    <button class="btn" id="b-start">Začít test</button>
+    <button class="btn secondary hidden" id="b-continue">Pokračovat v rozpracovaném testu</button>
+    <button class="btn secondary hidden" id="b-show">Zobrazit poslední výsledek</button>
+    <p class="muted" style="margin-top:18px">Původní, nevalidovaný test k sebereflexi. Není spojen s MBTI® ani jinými komerčními testy a není to psychologická diagnostika.</p>
+  </section>
+
+  <section id="s-quiz" class="hidden">
+    <div class="top">
+      <button class="back" id="b-back" aria-label="Předchozí otázka">‹</button>
+      <div class="progress" aria-hidden="true"><div id="prog"></div></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="card">
+      <div class="section">Jak moc to o tobě platí?</div>
+      <div class="statement" id="q-text"></div>
+      <div class="scale" id="q-scale" role="group"></div>
+      <div class="scale-labels"><span>vůbec neplatí</span><span>zcela platí</span></div>
+    </div>
+    <button class="btn ghost" id="b-pause">Přerušit a pokračovat později</button>
+  </section>
+
+  <section id="s-result" class="hidden">
+    <div class="card hero">
+      <div class="muted">Tvůj typ</div>
+      <div class="code" id="r-code"></div>
+      <h2 id="r-name"></h2>
+      <div class="muted" id="r-tag"></div>
+    </div>
+    <div id="r-warn"></div>
+    <div class="card">
+      <h2>Tvoje preference</h2>
+      <div id="r-axes"></div>
+    </div>
+    <div class="card">
+      <h2>Tvůj typ v kostce</h2>
+      <dl id="r-detail"></dl>
+    </div>
+    <div class="card" id="r-alt-card">
+      <h2>Mohl by sedět i…</h2>
+      <p class="muted">Typy, které se od tvého liší v nejtěsněji rozhodnuté ose. Přečti si je – který tě vystihuje lépe?</p>
+      <div id="r-alt"></div>
+    </div>
+    <button class="btn" id="b-copy">Zkopírovat výsledek</button>
+    <button class="btn secondary" id="b-again">Udělat test znovu</button>
+    <p class="muted" style="margin-top:18px">Typ popisuje preference, ne schopnosti. Každý umí používat obě strany každé osy – jen jednu volí přirozeněji.</p>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// Osy: kladné "p" = první pól (E, S, T, J)
+const AXES = [
+  { k: "EI", a: "E", b: "I", an: "Extraverze", bn: "Introverze" },
+  { k: "SN", a: "S", b: "N", an: "Smyslové vnímání", bn: "Intuice" },
+  { k: "TF", a: "T", b: "F", an: "Myšlení", bn: "Cítění" },
+  { k: "JP", a: "J", b: "P", an: "Plánování", bn: "Otevřenost" },
+];
+const ITEMS_RAW = {
+  E: ["Po dni mezi lidmi se cítím nabitě.",
+      "Myšlenky si nejlépe ujasním, když o nich mluvím s ostatními.",
+      "V nové společnosti snadno navážu rozhovor.",
+      "Raději pracuji v týmu než o samotě.",
+      "Volný večer nejraději strávím s přáteli venku.",
+      "Často mluvím dřív, než si všechno promyslím."],
+  I: ["Po společenské akci potřebuji čas o samotě na zotavení.",
+      "Než promluvím, potřebuji si věci nejdřív promyslet.",
+      "Mám raději pár hlubokých přátelství než široký okruh známých.",
+      "Dlouhé hovory s mnoha lidmi mě unaví.",
+      "Nejlépe se soustředím v tichu a o samotě.",
+      "Ve skupině spíš poslouchám, než mluvím."],
+  S: ["Víc věřím ověřené zkušenosti než teoriím.",
+      "Vyhovují mi konkrétní pokyny krok za krokem.",
+      "Všímám si detailů, které ostatní přehlédnou.",
+      "Zajímá mě hlavně to, co je praktické a použitelné hned.",
+      "Popisuji věci přesně a doslova.",
+      "Raději zdokonaluji osvědčené postupy, než vymýšlím nové."],
+  N: ["Často přemýšlím o tom, co by mohlo být, víc než o tom, co je.",
+      "Baví mě abstraktní nápady a teorie.",
+      "Rychle vidím souvislosti mezi zdánlivě nesouvisejícími věcmi.",
+      "Rutinní práce mě rychle nudí.",
+      "Často mluvím v metaforách a obrazech.",
+      "Zajímá mě víc celkový smysl než jednotlivé detaily."],
+  T: ["Při rozhodování dávám přednost logice před pocity.",
+      "Upřímná kritika je pro mě důležitější než ohleduplnost.",
+      "Problémy přirozeně analyzuji nestranně a s odstupem.",
+      "Spravedlnost pro mě znamená stejná pravidla pro všechny.",
+      "V debatě mi jde hlavně o to, kdo má věcně pravdu.",
+      "Efektivita je pro mě důležitější než to, aby byli všichni spokojení."],
+  F: ["Při rozhodování zvažuji hlavně, jak to ovlivní lidi.",
+      "Harmonie v týmu je pro mě důležitější než mít pravdu.",
+      "Snadno se vcítím do toho, jak se druzí cítí.",
+      "Udělám výjimku z pravidla, když to pomůže konkrétnímu člověku.",
+      "Kritiku formuluji opatrně, aby nikoho nezranila.",
+      "Rozhoduji se podle hodnot a podle toho, co je správné vůči lidem."],
+  J: ["Mám raději jasný plán než improvizaci.",
+      "Úkoly dokončuji s předstihem.",
+      "Pořádek a struktura mi dávají klid.",
+      "Je mi příjemné mít věci uzavřené a rozhodnuté.",
+      "Pravidelně používám seznamy úkolů a kalendář.",
+      "Nečekané změny plánů mě vyvedou z míry."],
+  P: ["Nejlépe pracuji pod tlakem blížícího se termínu.",
+      "Nechávám si možnosti otevřené co nejdéle.",
+      "Plány beru spíš jako orientační.",
+      "Snadno se přizpůsobím, když se situace změní.",
+      "Začínám víc věcí, než stihnu dokončit.",
+      "Spontánní nápady mě lákají víc než pevný program."],
+};
+// pevné promíchané pořadí: v každém kole jeden výrok z každého pólu, osy se střídají
+const ORDER = ["E","S","T","J","I","N","F","P"];
+const ITEMS = [];
+for (let r = 0; r < 6; r++) {
+  const rot = ORDER.slice(r % 8).concat(ORDER.slice(0, r % 8));
+  for (const pole of rot) ITEMS.push({ id: pole + (r + 1), pole, text: ITEMS_RAW[pole][r] });
+}
+
+const TYPES = {
+  INTJ: { n: "Stratég", tag: "Nezávislý vizionář s plánem",
+    d: "Vidíš, kam věci směřují, a vymyslíš, jak se tam dostat. Ceníš si kompetence, logiky a dlouhodobých cílů.",
+    s: "Strategické myšlení, nezávislost, vysoké nároky, schopnost dotahovat složité projekty.",
+    w: "Netrpělivost s neefektivitou, přehlížení emocí druhých, sklon vše dělat po svém.",
+    work: "Daří se ti tam, kde můžeš navrhovat systémy a mít autonomii – strategie, výzkum, architektura, technologie.",
+    rel: "Jsi věrný a upřímný, city ale ukazuješ spíš činy než slovy.",
+    tip: "Řekni nahlas, co oceňuješ na druhých. Lidé nevidí, co si jen myslíš." },
+  INTP: { n: "Myslitel", tag: "Zvídavý analytik idejí",
+    d: "Fascinují tě principy a otázka „proč“. Rád/a rozebíráš problémy až na dřeň a hledáš elegantní řešení.",
+    s: "Logická přesnost, originalita, otevřenost novým myšlenkám, nadhled.",
+    w: "Odkládání praktických věcí, ztrácení se v hlavě, malá trpělivost s rutinou a small talkem.",
+    work: "Výzkum, programování, analýza, věda – všude, kde je prostor přemýšlet do hloubky.",
+    rel: "Dáváš druhým svobodu a čekáš totéž; emoce potřebuješ nejdřív zpracovat.",
+    tip: "Dotáhni jeden nápad do hotové podoby, než začneš další." },
+  ENTJ: { n: "Vůdce", tag: "Rozhodný organizátor cílů",
+    d: "Přirozeně přebíráš vedení, stanovuješ cíle a mobilizuješ lidi i zdroje k jejich dosažení.",
+    s: "Rozhodnost, sebedůvěra, organizační talent, schopnost vidět celek.",
+    w: "Netrpělivost, přehlížení pocitů, sklon tlačit na výkon na úkor lidí.",
+    work: "Řízení, podnikání, management projektů, konzultace.",
+    rel: "Jsi oddaný a ochranitelský, ale rád/a máš věci pod kontrolou i doma.",
+    tip: "Než rozhodneš za tým, zeptej se, jak to vidí ostatní – a opravdu poslouchej." },
+  ENTP: { n: "Vynálezce", tag: "Hravý tvůrce možností",
+    d: "Miluješ nové nápady, debaty a výzvy. Zpochybňuješ zažité a hledáš, jak to udělat jinak.",
+    s: "Kreativita, pohotovost, nadšení, schopnost vidět možnosti a improvizovat.",
+    w: "Nedotahování, provokování pro zábavu, nuda z rutiny a detailů.",
+    work: "Inovace, podnikání, marketing, poradenství, cokoli s prostorem pro nové.",
+    rel: "Jsi zábavný a podnětný partner/partnerka; potřebuješ svobodu a intelektuální jiskru.",
+    tip: "Vyber jednu věc a dotáhni ji. Ne každý nápad je potřeba hned obhajovat v debatě." },
+  INFJ: { n: "Vizionář", tag: "Tichý idealista s hlubokým vhledem",
+    d: "Vnímáš skryté motivy a směr, kterým se lidé a věci ubírají. Chceš, aby tvá práce měla smysl.",
+    s: "Hluboká empatie, intuice, idealismus, vytrvalost v tom, čemu věříš.",
+    w: "Perfekcionismus, vyčerpání z přebírání emocí druhých, náhlé stažení.",
+    work: "Poradenství, psaní, vzdělávání, psychologie, smysluplné organizace.",
+    rel: "Hledáš hluboké, opravdové spojení; povrchnost tě unavuje.",
+    tip: "Hlídej si hranice – nemusíš nést tíhu všech kolem sebe." },
+  INFP: { n: "Idealista", tag: "Citlivý snílek věrný svým hodnotám",
+    d: "Řídíš se silným vnitřním kompasem hodnot. Hledáš autenticitu a smysl a máš bohatý vnitřní svět.",
+    s: "Empatie, tvořivost, upřímnost, věrnost hodnotám, otevřenost.",
+    w: "Přecitlivělost na kritiku, idealizace, potíže s praktickými detaily a termíny.",
+    work: "Psaní, umění, pomáhající profese, práce s hodnotovým přesahem.",
+    rel: "Jsi oddaný a hluboce chápající; potřebuješ, aby tě druhý přijal takového/takovou, jaký/á jsi.",
+    tip: "Rozděl velký sen na malé konkrétní kroky a první udělej ještě dnes." },
+  ENFJ: { n: "Mentor", tag: "Vřelý lídr, který rozvíjí druhé",
+    d: "Vidíš potenciál v lidech a umíš je nadchnout. Vytváříš soudržné týmy a komunity.",
+    s: "Charisma, empatie, komunikace, organizace lidí, inspirace.",
+    w: "Přebírání odpovědnosti za pocity druhých, potřeba být oceňován/a, zanedbávání sebe.",
+    work: "Vedení lidí, vzdělávání, HR, koučink, komunitní práce.",
+    rel: "Jsi pozorný a štědrý; pozor, abys druhé neměnil/a podle svých představ.",
+    tip: "Zeptej se sám/sama sebe: „Co potřebuji já?“ – a dopřej si to." },
+  ENFP: { n: "Inspirátor", tag: "Nadšený objevitel lidí a možností",
+    d: "Jsi plný/á energie, nápadů a zájmu o lidi. Vidíš potenciál všude a umíš strhnout ostatní.",
+    s: "Nadšení, kreativita, empatie, komunikace, flexibilita.",
+    w: "Roztěkanost, nedotahování, citlivost na odmítnutí, nuda z rutiny.",
+    work: "Kreativní obory, komunikace, vzdělávání, startupy, práce s lidmi.",
+    rel: "Jsi vřelý/á a hravý/á; potřebuješ hloubku i prostor pro svobodu.",
+    tip: "Vyber si tři priority na týden a ostatní nápady si jen zapiš na později." },
+  ISTJ: { n: "Správce", tag: "Spolehlivý a důsledný realista",
+    d: "Na tebe je spolehnutí. Ceníš si řádu, povinnosti a ověřených postupů a věci děláš pořádně.",
+    s: "Spolehlivost, pečlivost, smysl pro odpovědnost, praktičnost, vytrvalost.",
+    w: "Rigidita, nedůvěra ke změnám, menší ochota vyjadřovat emoce.",
+    work: "Finance, právo, logistika, správa, kvalita, technické obory.",
+    rel: "Jsi věrný/á a stálý/á; lásku ukazuješ péčí a dodržováním slibů.",
+    tip: "Zkus jednou za čas něco nového bez plánu – i malá změna rozšiřuje obzory." },
+  ISFJ: { n: "Pečovatel", tag: "Laskavý strážce, který myslí na druhé",
+    d: "Tiše se staráš, aby ostatním nic nechybělo. Pamatuješ si detaily o lidech a záleží ti na tradicích.",
+    s: "Ochota, spolehlivost, všímavost, trpělivost, loajalita.",
+    w: "Neschopnost říct ne, přehlížení vlastních potřeb, obava ze změn a konfliktů.",
+    work: "Zdravotnictví, vzdělávání, administrativa, služby, sociální práce.",
+    rel: "Jsi oddaný/á a pečující; potřebuješ, aby si někdo všiml i tvé práce.",
+    tip: "Řekni jasně, co potřebuješ. Ostatní ti rádi pomůžou – jen to musí vědět." },
+  ESTJ: { n: "Organizátor", tag: "Praktický lídr, který dává věcem řád",
+    d: "Rád/a organizuješ lidi a procesy, aby věci fungovaly. Ceníš si jasných pravidel a výsledků.",
+    s: "Organizace, rozhodnost, spolehlivost, přímost, smysl pro povinnost.",
+    w: "Netrpělivost, rigidita, přehlížení pocitů a nových přístupů.",
+    work: "Management, provoz, administrativa, armáda/bezpečnost, projektové řízení.",
+    rel: "Jsi stabilní a zodpovědný/á; ukazuješ lásku spolehlivostí.",
+    tip: "Než zamítneš nový postup, zkus ho vyzkoušet v malém." },
+  ESFJ: { n: "Hostitel", tag: "Společenský pečovatel o vztahy",
+    d: "Vytváříš kolem sebe pohodu a soudržnost. Záleží ti na lidech, tradicích a vzájemné pomoci.",
+    s: "Vřelost, ochota, organizace, smysl pro potřeby skupiny, loajalita.",
+    w: "Potřeba uznání, citlivost na kritiku, obtížné zvládání konfliktu.",
+    work: "Zdravotnictví, vzdělávání, HR, eventy, zákaznická péče.",
+    rel: "Jsi pozorný/á a starostlivý/á; potřebuješ vřelost a uznání.",
+    tip: "Ne každý nesouhlas je odmítnutí tebe – je to jen jiný názor." },
+  ISTP: { n: "Řemeslník", tag: "Klidný praktik, který rozumí věcem",
+    d: "Chceš vědět, jak věci fungují – a umíš je opravit. V krizi zůstáváš klidný/á a jednáš.",
+    s: "Praktická zručnost, klid pod tlakem, logika, nezávislost, flexibilita.",
+    w: "Uzavřenost, nuda z dlouhodobých plánů, riskování, malá sdílnost.",
+    work: "Technika, řemesla, inženýrství, IT, záchranné složky, sport.",
+    rel: "Jsi uvolněný/á a respektuješ prostor druhých; emoce sdílíš málokdy.",
+    tip: "Řekni blízkým, co prožíváš – nejen co děláš." },
+  ISFP: { n: "Umělec", tag: "Tichý estét žijící přítomností",
+    d: "Vnímáš krásu, barvy a atmosféru. Žiješ podle svých hodnot, laskavě a bez potřeby se prosazovat.",
+    s: "Citlivost, estetické cítění, laskavost, flexibilita, autenticita.",
+    w: "Vyhýbání se konfliktu, plánování a kritice; sklon stahovat se.",
+    work: "Design, umění, řemeslo, péče o lidi či zvířata, příroda.",
+    rel: "Jsi něžný/á a loajální; lásku ukazuješ činy a pozorností.",
+    tip: "Ozvi se, když s něčím nesouhlasíš – tvůj pohled má váhu." },
+  ESTP: { n: "Realizátor", tag: "Energický člověk činu",
+    d: "Žiješ teď a tady, rychle reaguješ a rád/a riskuješ. Problémy řešíš za pochodu.",
+    s: "Pohotovost, odvaha, praktičnost, přesvědčivost, smysl pro příležitosti.",
+    w: "Impulzivita, netrpělivost s teorií a plánováním, přehlížení důsledků.",
+    work: "Obchod, podnikání, sport, záchranné složky, cokoli akčního.",
+    rel: "Jsi zábavný/á a spontánní; dlouhodobé plánování ti tolik nejde.",
+    tip: "Před velkým rozhodnutím si dej 24 hodin a promysli důsledky." },
+  ESFP: { n: "Animátor", tag: "Spontánní duše večírku",
+    d: "Přinášíš do života lidí radost, energii a zážitky. Užíváš si přítomnost a lidi kolem sebe.",
+    s: "Vřelost, nadšení, praktická pomoc, smysl pro zábavu, přizpůsobivost.",
+    w: "Vyhýbání se nepříjemnému, malé plánování, roztěkanost.",
+    work: "Eventy, prodej, pohostinství, zábava, práce s dětmi, sport.",
+    rel: "Jsi štědrý/á a hravý/á; potřebuješ společnost a lehkost.",
+    tip: "Udělej si jednoduchý plán financí a času – dá ti víc svobody, ne méně." },
+};
+
+const SCALE = ["vůbec neplatí", "spíše neplatí", "napůl", "spíše platí", "zcela platí"];
+const KEY = "typy16-v1";
+let state = { answers: {}, i: 0, done: false };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.answers) state = s; } catch (e) {} }
+
+const $ = id => document.getElementById(id);
+function show(id) { for (const s of ["s-intro", "s-quiz", "s-result"]) $(s).classList.toggle("hidden", s !== id); window.scrollTo(0, 0); }
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const it = ITEMS[state.i];
+  $("prog").style.width = (state.i / ITEMS.length * 100) + "%";
+  $("count").textContent = `${state.i + 1} / ${ITEMS.length}`;
+  $("b-back").disabled = state.i === 0;
+  $("q-text").textContent = it.text;
+  const sc = $("q-scale"); sc.innerHTML = "";
+  for (let v = 1; v <= 5; v++) {
+    const b = document.createElement("button");
+    b.textContent = v; b.setAttribute("aria-label", `${v} – ${SCALE[v - 1]}`);
+    if (state.answers[it.id] === v) b.classList.add("sel");
+    b.onclick = () => answer(v);
+    sc.appendChild(b);
+  }
+}
+let locked = false;
+function answer(v) {
+  if (locked) return;
+  state.answers[ITEMS[state.i].id] = v; render(); save();
+  locked = true;
+  setTimeout(() => {
+    locked = false;
+    if (state.i < ITEMS.length - 1) { state.i++; save(); render(); }
+    else { state.done = true; save(); showResult(); }
+  }, 180);
+}
+
+// skóre osy: průměr (v-3) pro první pól minus průměr (v-3) pro druhý pól → -4..4 → procenta prvního pólu
+function evaluate(ans) {
+  const res = AXES.map(ax => {
+    const val = pole => ITEMS.filter(i => i.pole === pole && ans[i.id] != null).map(i => ans[i.id] - 3);
+    const A = val(ax.a), B = val(ax.b);
+    const m = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+    const diff = m(A) - m(B);                       // -4..4
+    const pctA = Math.round(50 + diff / 8 * 100);   // 0..100
+    const win = pctA >= 50 ? ax.a : ax.b;
+    const pct = win === ax.a ? pctA : 100 - pctA;
+    return { ...ax, pctA, win, pct, clear: pct >= 60 ? "jasná" : pct >= 55 ? "mírná" : "nejasná" };
+  });
+  const code = res.map(r => r.win).join("");
+  const warn = [];
+  const close = res.filter(r => r.pct < 55);
+  if (close.length) warn.push(`Na ose ${close.map(r => `${r.a}/${r.b}`).join(", ")} vyšly obě strany téměř stejně. Přečti si i alternativní typ níže.`);
+  const all = Object.values(ans).filter(v => typeof v === "number");
+  const avg = all.reduce((s, x) => s + x, 0) / all.length;
+  if (avg > 4.2) warn.push("Souhlasíš téměř se vším – výsledek může být méně přesný.");
+  if (avg < 1.8) warn.push("Nesouhlasíš téměř s ničím – výsledek může být méně přesný.");
+  const sorted = [...res].sort((x, y) => x.pct - y.pct);
+  const alts = sorted.slice(0, close.length >= 2 ? 2 : 1).map(r => code.replace(r.win, r.win === r.a ? r.b : r.a));
+  return { res, code, warn, alts };
+}
+
+function typeDl(code) {
+  const T = TYPES[code];
+  return `<dt>Jaký/á jsi</dt><dd>${esc(T.d)}</dd><dt>Silné stránky</dt><dd>${esc(T.s)}</dd>
+    <dt>Slabší místa</dt><dd>${esc(T.w)}</dd><dt>V práci</dt><dd>${esc(T.work)}</dd>
+    <dt>Ve vztazích</dt><dd>${esc(T.rel)}</dd><dt>Tip pro růst</dt><dd>${esc(T.tip)}</dd>`;
+}
+
+let last = null;
+function showResult() {
+  const r = evaluate(state.answers); last = r;
+  $("r-code").textContent = r.code;
+  $("r-name").textContent = TYPES[r.code].n;
+  $("r-tag").textContent = TYPES[r.code].tag;
+  $("r-warn").innerHTML = r.warn.map(w => `<div class="warn">${esc(w)}</div>`).join("");
+  $("r-axes").innerHTML = r.res.map(x => {
+    const left = x.win === x.a;
+    const w = Math.abs(x.pctA - 50);
+    const style = left ? `right:50%;width:${w}%` : `left:50%;width:${w}%`;
+    return `<div class="axis"><div class="axis-head"><span class="${left ? "win" : ""}">${x.a} · ${x.an}</span><span class="${left ? "" : "win"}">${x.bn} · ${x.b}</span></div>
+      <div class="axis-bar"><div style="${style}"></div></div>
+      <div class="axis-note">${x.win === x.a ? x.an : x.bn} ${x.pct} % – ${x.clear} preference</div></div>`;
+  }).join("");
+  $("r-detail").innerHTML = typeDl(r.code);
+  $("r-alt").innerHTML = r.alts.map(c => `<details><summary>${c} – ${esc(TYPES[c].n)}</summary><p class="muted" style="margin-top:6px">${esc(TYPES[c].tag)}</p><dl>${typeDl(c)}</dl></details>`).join("");
+  show("s-result");
+}
+
+function start(fresh) { if (fresh) state = { answers: {}, i: 0, done: false }; save(); show("s-quiz"); render(); }
+$("b-start").onclick = () => { if (Object.keys(state.answers).length && !confirm("Začít znovu? Rozpracované odpovědi se smažou.")) return; start(true); };
+$("b-continue").onclick = () => start(false);
+$("b-show").onclick = showResult;
+$("b-back").onclick = () => { if (state.i > 0) { state.i--; save(); render(); } };
+$("b-pause").onclick = () => { save(); initIntro(); toast("Postup uložen"); };
+$("b-again").onclick = () => start(true);
+$("b-copy").onclick = async () => {
+  const t = `Můj typ (test 16 typů): ${last.code} – ${TYPES[last.code].n}\n` +
+    last.res.map(x => `${x.win === x.a ? x.an : x.bn} ${x.pct} %`).join(", ");
+  try { await navigator.clipboard.writeText(t); toast("Zkopírováno"); } catch (e) { prompt("Zkopíruj si výsledek:", t); }
+};
+document.addEventListener("keydown", e => {
+  if ($("s-quiz").classList.contains("hidden")) return;
+  if (/^[1-5]$/.test(e.key)) answer(+e.key);
+  else if (e.key === "Backspace" || e.key === "ArrowLeft") $("b-back").click();
+});
+function initIntro() {
+  const started = Object.keys(state.answers).length > 0;
+  $("b-start").textContent = started ? "Začít znovu" : "Začít test";
+  $("b-continue").classList.toggle("hidden", !started || state.done);
+  $("b-show").classList.toggle("hidden", !state.done);
+  show("s-intro");
+}
+load(); initIntro();
+</script>
+</body>
+</html>
