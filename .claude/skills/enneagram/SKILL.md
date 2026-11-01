@@ -36,7 +36,8 @@ Enneagram je užitečný rámec pro reflexi, **není to vědecky validovaný dia
 | `assets/dotaznik.md` | Dotazník k vyplnění (108 výroků + 2 rychlé otázky) |
 | `assets/dotaznik.json` | Strojová podoba dotazníku (zdroj pravdy pro skript i případnou aplikaci) |
 | `scripts/vyhodnot.py` | Vyhodnocení odpovědí (JSON nebo vyplněný `dotaznik.md`) |
-| `scripts/sestav_dotaznik.py` | Zdroj výroků; po úpravě výroků spusť a přegeneruje `assets/dotaznik.*` |
+| `scripts/sestav_dotaznik.py` | Zdroj výroků; po úpravě výroků spusť a přegeneruje `assets/dotaznik.*` i data v aplikaci |
+| `/enneagram/index.html` (kořen repa) | Mobilní webová aplikace s dotazníkem a vyhodnocením (GitHub Pages) – lze doporučit uživateli k vyplnění |
 
 ## Pracovní postupy
 

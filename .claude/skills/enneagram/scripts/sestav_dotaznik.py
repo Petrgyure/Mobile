@@ -200,4 +200,15 @@ def main():
            "a 6 výroků každého instinktu (část C)._", ""]
     (OUT / "dotaznik.md").write_text("\n".join(md), encoding="utf-8")
 
+    # Vložit data do webové aplikace (enneagram/index.html v kořeni repozitáře), pokud existuje.
+    app = pathlib.Path(__file__).resolve().parents[4] / "enneagram" / "index.html"
+    if app.exists():
+        import re
+        html = app.read_text(encoding="utf-8")
+        kompakt = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        html, n = re.subn(r"/\*DATA\*/.*?/\*/DATA\*/", lambda m: f"/*DATA*/{kompakt}/*/DATA*/", html, flags=re.S)
+        if n == 1:
+            app.write_text(html, encoding="utf-8")
+            print(f"Data vložena do {app}")
+
 main()
