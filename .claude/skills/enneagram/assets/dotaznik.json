@@ -1,0 +1,634 @@
+{
+ "nazev": "Enneagram – orientační dotazník",
+ "verze": "1.0",
+ "jazyk": "cs",
+ "poznamka": "Původní, nevalidovaný dotazník k sebereflexi. Nejde o diagnostiku.",
+ "instrukce": "Odpovídej podle toho, jak se chováš a prožíváš věci většinu života (zhruba od 20 let), ne podle toho, jak bys chtěl/a být nebo jak je to zrovna teď. Nepřemýšlej příliš dlouho.",
+ "skala": {
+  "1": "vůbec neplatí",
+  "2": "spíše neplatí",
+  "3": "napůl",
+  "4": "spíše platí",
+  "5": "zcela platí"
+ },
+ "cast_a": [
+  {
+   "id": "R1",
+   "osa": "hornevian",
+   "otazka": "Jak obvykle jdeš za tím, co chceš nebo potřebuješ?",
+   "moznosti": [
+    {
+     "kod": "A",
+     "skupina": "asertivni",
+     "typy": [
+      3,
+      7,
+      8
+     ],
+     "text": "Jdu si za tím přímo. Jednám, prosazuji se, beru si prostor a očekávám, že se věci pohnou."
+    },
+    {
+     "kod": "B",
+     "skupina": "vyhovujici",
+     "typy": [
+      1,
+      2,
+      6
+     ],
+     "text": "Snažím se dělat to, co je správné a co se ode mě čeká. Plním závazky a odpovědnost a věřím, že se mi to vrátí."
+    },
+    {
+     "kod": "C",
+     "skupina": "stazeni",
+     "typy": [
+      4,
+      5,
+      9
+     ],
+     "text": "Nejdřív se stáhnu do sebe a věci zpracuji uvnitř. Potřebuji prostor a čas, než se zapojím."
+    }
+   ]
+  },
+  {
+   "id": "R2",
+   "osa": "harmonicka",
+   "otazka": "Jak obvykle reaguješ, když se něco pokazí nebo přijde konflikt?",
+   "moznosti": [
+    {
+     "kod": "A",
+     "skupina": "pozitivni",
+     "typy": [
+      2,
+      7,
+      9
+     ],
+     "text": "Snažím se udržet dobrou náladu, vidět světlou stránku a nezatěžovat ostatní. Těžké pocity raději neřeším."
+    },
+    {
+     "kod": "B",
+     "skupina": "kompetencni",
+     "typy": [
+      1,
+      3,
+      5
+     ],
+     "text": "Odložím emoce stranou a řeším problém věcně, logicky a efektivně. Pocity mohou počkat."
+    },
+    {
+     "kod": "C",
+     "skupina": "reaktivni",
+     "typy": [
+      4,
+      6,
+      8
+     ],
+     "text": "Reaguji emočně a potřebuji, aby druzí moje pocity vzali vážně a reagovali, než se pohneme dál."
+    }
+   ]
+  }
+ ],
+ "cast_b": [
+  {
+   "id": "B01",
+   "typ": 4,
+   "text": "Často mám pocit, že mi chybí něco, co ostatní mají."
+  },
+  {
+   "id": "B02",
+   "typ": 7,
+   "text": "Mám v hlavě spoustu plánů a nápadů a těžko si mezi nimi vybírám."
+  },
+  {
+   "id": "B03",
+   "typ": 5,
+   "text": "Čas o samotě je pro mě nezbytný k obnovení energie."
+  },
+  {
+   "id": "B04",
+   "typ": 1,
+   "text": "Když vidím, že se něco dělá špatně, mám silnou potřebu to napravit."
+  },
+  {
+   "id": "B05",
+   "typ": 9,
+   "text": "Konflikty se snažím uklidnit nebo se jim vyhnout."
+  },
+  {
+   "id": "B06",
+   "typ": 2,
+   "text": "Snadno vycítím, co druzí potřebují, často dřív než oni sami."
+  },
+  {
+   "id": "B07",
+   "typ": 3,
+   "text": "Je pro mě důležité podávat výkon a dosahovat cílů."
+  },
+  {
+   "id": "B08",
+   "typ": 6,
+   "text": "Často předvídám, co by se mohlo pokazit."
+  },
+  {
+   "id": "B09",
+   "typ": 8,
+   "text": "Říkám věci na rovinu, i když to druhé může zaskočit."
+  },
+  {
+   "id": "B10",
+   "typ": 3,
+   "text": "Rychle vycítím, co se v dané situaci oceňuje, a umím se tomu přizpůsobit."
+  },
+  {
+   "id": "B11",
+   "typ": 9,
+   "text": "Snadno vidím pohled všech zúčastněných stran."
+  },
+  {
+   "id": "B12",
+   "typ": 8,
+   "text": "Nesnesu, když mě někdo ovládá nebo mi diktuje, co mám dělat."
+  },
+  {
+   "id": "B13",
+   "typ": 4,
+   "text": "Je pro mě zásadní žít v souladu s tím, kdo opravdu jsem."
+  },
+  {
+   "id": "B14",
+   "typ": 1,
+   "text": "V hlavě mi často běží vnitřní kritik, který hodnotí, co dělám."
+  },
+  {
+   "id": "B15",
+   "typ": 7,
+   "text": "Když přijde nepříjemný pocit, rychle se přesunu k něčemu příjemnějšímu."
+  },
+  {
+   "id": "B16",
+   "typ": 5,
+   "text": "Než začnu jednat, chci věci do hloubky pochopit."
+  },
+  {
+   "id": "B17",
+   "typ": 6,
+   "text": "Než se někomu svěřím, potřebuji si ověřit, že je důvěryhodný."
+  },
+  {
+   "id": "B18",
+   "typ": 2,
+   "text": "Pomáhat druhým mi dává pocit, že mám své místo."
+  },
+  {
+   "id": "B19",
+   "typ": 6,
+   "text": "Loajalita k lidem a skupinám, ke kterým patřím, je pro mě zásadní."
+  },
+  {
+   "id": "B20",
+   "typ": 8,
+   "text": "Když nikdo nepřebírá vedení, rychle ho převezmu."
+  },
+  {
+   "id": "B21",
+   "typ": 4,
+   "text": "Prožívám emoce intenzivněji než většina lidí kolem mě."
+  },
+  {
+   "id": "B22",
+   "typ": 5,
+   "text": "Pečlivě si hlídám svůj čas, energii a soukromí."
+  },
+  {
+   "id": "B23",
+   "typ": 1,
+   "text": "Je pro mě těžké nechat práci „dost dobrou“, když vím, že by mohla být lepší."
+  },
+  {
+   "id": "B24",
+   "typ": 9,
+   "text": "Často těžko poznávám, co doopravdy chci."
+  },
+  {
+   "id": "B25",
+   "typ": 2,
+   "text": "Těžko říkám ne, když mě někdo požádá o pomoc."
+  },
+  {
+   "id": "B26",
+   "typ": 3,
+   "text": "Záleží mi na tom, jakým dojmem působím."
+  },
+  {
+   "id": "B27",
+   "typ": 7,
+   "text": "Omezování a nuda jsou pro mě těžko snesitelné."
+  },
+  {
+   "id": "B28",
+   "typ": 9,
+   "text": "Přizpůsobuji se přáním ostatních, aby byl klid."
+  },
+  {
+   "id": "B29",
+   "typ": 5,
+   "text": "Emoce zpracovávám spíš později, v klidu, než v danou chvíli."
+  },
+  {
+   "id": "B30",
+   "typ": 1,
+   "text": "Zlost si většinou nedovolím ukázat; spíš se projeví jako podráždění nebo napětí v těle."
+  },
+  {
+   "id": "B31",
+   "typ": 4,
+   "text": "Přitahuje mě to, co je nedosažitelné nebo vzdálené."
+  },
+  {
+   "id": "B32",
+   "typ": 6,
+   "text": "Pochybuji o vlastních rozhodnutích a hledám potvrzení od ostatních."
+  },
+  {
+   "id": "B33",
+   "typ": 8,
+   "text": "Přiznat zranitelnost je pro mě těžké."
+  },
+  {
+   "id": "B34",
+   "typ": 3,
+   "text": "Pocity si často odkládám na později, aby mi nebránily v práci."
+  },
+  {
+   "id": "B35",
+   "typ": 2,
+   "text": "O vlastních potřebách se mi mluví těžko."
+  },
+  {
+   "id": "B36",
+   "typ": 7,
+   "text": "Vidím v životě hlavně možnosti a příležitosti."
+  },
+  {
+   "id": "B37",
+   "typ": 9,
+   "text": "Důležité úkoly odkládám a věnuji se raději drobnostem nebo rutině."
+  },
+  {
+   "id": "B38",
+   "typ": 5,
+   "text": "Příliš mnoho požadavků od druhých mě rychle vyčerpá."
+  },
+  {
+   "id": "B39",
+   "typ": 6,
+   "text": "K autoritám mám dvojaký vztah: hledám u nich oporu, a zároveň jim nedůvěřuji."
+  },
+  {
+   "id": "B40",
+   "typ": 2,
+   "text": "Zabolí mě, když nikdo neocení, kolik pro druhé dělám."
+  },
+  {
+   "id": "B41",
+   "typ": 1,
+   "text": "Řídím se tím, co je správné, i když je to pro mě nevýhodné."
+  },
+  {
+   "id": "B42",
+   "typ": 8,
+   "text": "Chráním lidi, na kterých mi záleží, a zastávám se slabších."
+  },
+  {
+   "id": "B43",
+   "typ": 3,
+   "text": "Neúspěch beru velmi osobně, jako by vypovídal o mé hodnotě."
+  },
+  {
+   "id": "B44",
+   "typ": 7,
+   "text": "Závazky mě znervózňují, protože zavírají jiné možnosti."
+  },
+  {
+   "id": "B45",
+   "typ": 4,
+   "text": "Vadí mi představa obyčejného, zaměnitelného života."
+  },
+  {
+   "id": "B46",
+   "typ": 3,
+   "text": "Motivuje mě vidět měřitelný pokrok."
+  },
+  {
+   "id": "B47",
+   "typ": 5,
+   "text": "Ve skupině spíš pozoruji, než se zapojuji."
+  },
+  {
+   "id": "B48",
+   "typ": 6,
+   "text": "V krizi umím fungovat lépe, než by se dalo čekat."
+  },
+  {
+   "id": "B49",
+   "typ": 8,
+   "text": "Konflikt mi nevadí; v něm se ukáže, kdo je doopravdy zač."
+  },
+  {
+   "id": "B50",
+   "typ": 2,
+   "text": "Blízké vztahy s lidmi jsou pro mě to nejdůležitější v životě."
+  },
+  {
+   "id": "B51",
+   "typ": 9,
+   "text": "Lidé o mně říkají, že je se mnou pohoda."
+  },
+  {
+   "id": "B52",
+   "typ": 4,
+   "text": "Melancholie má pro mě zvláštní krásu."
+  },
+  {
+   "id": "B53",
+   "typ": 1,
+   "text": "Vadí mi, když druzí nedodržují pravidla nebo dohody."
+  },
+  {
+   "id": "B54",
+   "typ": 7,
+   "text": "Umím přerámovat problém tak, aby vypadal pozitivně."
+  },
+  {
+   "id": "B55",
+   "typ": 3,
+   "text": "Hledám nejefektivnější cestu k výsledku a nesnáším zdržování."
+  },
+  {
+   "id": "B56",
+   "typ": 7,
+   "text": "Rychle se nadchnu, ale stejně rychle přecházím k dalšímu."
+  },
+  {
+   "id": "B57",
+   "typ": 4,
+   "text": "Často se srovnávám s druhými a vychází mi z toho, že jsem na tom hůř."
+  },
+  {
+   "id": "B58",
+   "typ": 6,
+   "text": "Mám ve zvyku mít připravený plán B."
+  },
+  {
+   "id": "B59",
+   "typ": 9,
+   "text": "Vlastní zlost si dlouho neuvědomuji; pak se může projevit tvrdohlavostí."
+  },
+  {
+   "id": "B60",
+   "typ": 5,
+   "text": "Chci mít v oblasti, která mě zajímá, skutečně hluboké znalosti."
+  },
+  {
+   "id": "B61",
+   "typ": 8,
+   "text": "Respektuji lidi, kteří se mi umějí postavit."
+  },
+  {
+   "id": "B62",
+   "typ": 1,
+   "text": "Odpočinek si často musím nejdřív „zasloužit“ splněním povinností."
+  },
+  {
+   "id": "B63",
+   "typ": 2,
+   "text": "Umím se přizpůsobit tak, aby mě druzí měli rádi."
+  },
+  {
+   "id": "B64",
+   "typ": 4,
+   "text": "Potřebuji, aby mě druzí opravdu pochopili, ne jen vyslechli."
+  },
+  {
+   "id": "B65",
+   "typ": 9,
+   "text": "Pohodlí a příjemná rutina jsou pro mě důležité."
+  },
+  {
+   "id": "B66",
+   "typ": 8,
+   "text": "Mám hodně energie a jdu do věcí naplno."
+  },
+  {
+   "id": "B67",
+   "typ": 6,
+   "text": "Když je něco až příliš dobré, hledám, kde je háček."
+  },
+  {
+   "id": "B68",
+   "typ": 7,
+   "text": "Chci toho v životě zažít co nejvíc."
+  },
+  {
+   "id": "B69",
+   "typ": 1,
+   "text": "Chyby – své i cizí – si všimnu dřív než toho, co se povedlo."
+  },
+  {
+   "id": "B70",
+   "typ": 5,
+   "text": "Vystačím si s málem, pokud mám klid a nezávislost."
+  },
+  {
+   "id": "B71",
+   "typ": 3,
+   "text": "Někdy nevím, kdo jsem bez svých výsledků a rolí."
+  },
+  {
+   "id": "B72",
+   "typ": 2,
+   "text": "Když moje péče zůstane bez odezvy, cítím křivdu."
+  },
+  {
+   "id": "B73",
+   "typ": 5,
+   "text": "Vadí mi, když ode mě někdo čeká víc, než chci dát."
+  },
+  {
+   "id": "B74",
+   "typ": 6,
+   "text": "Bezpečí a jistota jsou pro mě velmi důležité."
+  },
+  {
+   "id": "B75",
+   "typ": 3,
+   "text": "Uznání a obdiv mě silně motivují."
+  },
+  {
+   "id": "B76",
+   "typ": 2,
+   "text": "Lidé za mnou přirozeně chodí se svými starostmi."
+  },
+  {
+   "id": "B77",
+   "typ": 7,
+   "text": "Když se mluví o bolesti, mám tendenci atmosféru odlehčit."
+  },
+  {
+   "id": "B78",
+   "typ": 1,
+   "text": "Mám jasnou představu o tom, jak by věci měly být."
+  },
+  {
+   "id": "B79",
+   "typ": 8,
+   "text": "Nespravedlnost ve mně vyvolá okamžitou a silnou reakci."
+  },
+  {
+   "id": "B80",
+   "typ": 4,
+   "text": "Přirozeně se vyjadřuji skrze estetiku, umění nebo osobní styl."
+  },
+  {
+   "id": "B81",
+   "typ": 9,
+   "text": "Mám pocit, že na mém názoru tolik nezáleží."
+  },
+  {
+   "id": "B82",
+   "typ": 8,
+   "text": "Nechci se spoléhat na druhé; raději mám věci pod kontrolou."
+  },
+  {
+   "id": "B83",
+   "typ": 4,
+   "text": "V něčem zásadním se cítím odlišně od ostatních."
+  },
+  {
+   "id": "B84",
+   "typ": 2,
+   "text": "Je pro mě důležité, aby mě druzí potřebovali."
+  },
+  {
+   "id": "B85",
+   "typ": 7,
+   "text": "Na budoucí zážitky se často těším víc, než prožívám ty současné."
+  },
+  {
+   "id": "B86",
+   "typ": 1,
+   "text": "Cítím osobní odpovědnost za to, aby věci kolem mě byly v pořádku."
+  },
+  {
+   "id": "B87",
+   "typ": 6,
+   "text": "Úzkost nebo vnitřní neklid jsou mými častými společníky."
+  },
+  {
+   "id": "B88",
+   "typ": 5,
+   "text": "Přemýšlení v soukromí mi vyhovuje víc než přemýšlení nahlas s ostatními."
+  },
+  {
+   "id": "B89",
+   "typ": 9,
+   "text": "Dokážu se „ztratit“ v činnostech, které mě uklidňují (seriály, jídlo, koníčky)."
+  },
+  {
+   "id": "B90",
+   "typ": 3,
+   "text": "Když něco dělám, chci v tom patřit mezi nejlepší."
+  }
+ ],
+ "cast_c": [
+  {
+   "id": "C01",
+   "instinkt": "sp",
+   "text": "Hlídám si zdraví, spánek, jídlo a finanční jistotu."
+  },
+  {
+   "id": "C02",
+   "instinkt": "so",
+   "text": "Zajímá mě, jaké mám postavení ve skupině nebo komunitě."
+  },
+  {
+   "id": "C03",
+   "instinkt": "sx",
+   "text": "Vyhledávám intenzivní spojení s jedním člověkem."
+  },
+  {
+   "id": "C04",
+   "instinkt": "so",
+   "text": "Sleduji, co se děje ve skupinách, kam patřím, a jaké jsou v nich vztahy."
+  },
+  {
+   "id": "C05",
+   "instinkt": "sp",
+   "text": "Domov a pohodlné zázemí jsou pro mě prioritou."
+  },
+  {
+   "id": "C06",
+   "instinkt": "sx",
+   "text": "Přitažlivost a chemie mezi lidmi je pro mě silný motor."
+  },
+  {
+   "id": "C07",
+   "instinkt": "sx",
+   "text": "Když mě něco nebo někdo zaujme, jdu do toho celou bytostí."
+  },
+  {
+   "id": "C08",
+   "instinkt": "so",
+   "text": "Je pro mě důležité přispívat něčím širšímu celku."
+  },
+  {
+   "id": "C09",
+   "instinkt": "sp",
+   "text": "Často řeším, zda mám dostatek zdrojů – peněz, času, energie."
+  },
+  {
+   "id": "C10",
+   "instinkt": "so",
+   "text": "Rychle vnímám nepsaná pravidla a hierarchii."
+  },
+  {
+   "id": "C11",
+   "instinkt": "sx",
+   "text": "Povrchní rozhovory mě nudí; chci jít do hloubky."
+  },
+  {
+   "id": "C12",
+   "instinkt": "sp",
+   "text": "Ve stresu nejdřív řeším praktické zajištění."
+  },
+  {
+   "id": "C13",
+   "instinkt": "so",
+   "text": "Udržování široké sítě kontaktů je pro mě přirozené."
+  },
+  {
+   "id": "C14",
+   "instinkt": "sp",
+   "text": "Klidný večer doma je pro mě obvykle lepší než společenská akce."
+  },
+  {
+   "id": "C15",
+   "instinkt": "sx",
+   "text": "Hodně vnímám, jak působím na lidi, kteří mě zajímají."
+  },
+  {
+   "id": "C16",
+   "instinkt": "sp",
+   "text": "Plánuji dopředu, aby mi nic podstatného nechybělo."
+  },
+  {
+   "id": "C17",
+   "instinkt": "so",
+   "text": "Vyloučení z kolektivu je pro mě jedna z nejhorších věcí."
+  },
+  {
+   "id": "C18",
+   "instinkt": "sx",
+   "text": "Vztah bez jiskry je pro mě těžko snesitelný."
+  }
+ ]
+}

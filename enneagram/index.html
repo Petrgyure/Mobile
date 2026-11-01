@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14162b">
+<title>Enneagram test</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #ffffff; --text: #1d1f2e; --muted: #6b6d7c; --line: #e3e0d8;
+    --accent: #5b4bd6; --accent-soft: #ece9ff; --accent-text: #ffffff;
+    --warn-bg: #fff4dc; --warn-text: #7a5300; --bar: #5b4bd6; --bar-dim: #c9c4f2;
+    --shadow: 0 1px 2px rgba(20,20,40,.06), 0 6px 24px rgba(20,20,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14162b; --card: #1e2140; --text: #eceaf6; --muted: #a3a3bd; --line: #2f3360;
+      --accent: #9a8cff; --accent-soft: #2c2a5c; --accent-text: #14162b;
+      --warn-bg: #3a2f12; --warn-text: #f3d48a; --bar: #9a8cff; --bar-dim: #4a4785;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+      --bg: #14162b; --card: #1e2140; --text: #eceaf6; --muted: #a3a3bd; --line: #2f3360;
+      --accent: #9a8cff; --accent-soft: #2c2a5c; --accent-text: #14162b;
+      --warn-bg: #3a2f12; --warn-text: #f3d48a; --bar: #9a8cff; --bar-dim: #4a4785;
+      --shadow: none;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); }
+  body {
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100dvh; display: flex; justify-content: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  }
+  main { width: 100%; max-width: 560px; display: flex; flex-direction: column; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin-bottom: 12px; }
+  h2 { font-size: 1.25rem; line-height: 1.3; margin: 0 0 10px; }
+  h3 { font-size: 1rem; margin: 16px 0 6px; }
+  p { margin-bottom: 10px; }
+  .muted { color: var(--muted); font-size: .92rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px 18px; min-height: 52px;
+    font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-text);
+  }
+  .btn.secondary { background: var(--accent-soft); color: var(--text); }
+  .btn.ghost { background: transparent; color: var(--muted); font-weight: 500; }
+  .btn + .btn { margin-top: 10px; }
+  .btn:focus-visible, .opt:focus-visible, .scale button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .hidden { display: none !important; }
+
+  /* progress */
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .back { border: 0; background: var(--accent-soft); color: var(--text); width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; cursor: pointer; flex: none; }
+  .back:disabled { opacity: .35; }
+  .progress { flex: 1; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .progress div { height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .count { font-size: .85rem; color: var(--muted); min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* question */
+  .section { font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .statement { font-size: 1.3rem; line-height: 1.4; font-weight: 600; min-height: 5.6em; display: flex; align-items: center; }
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; }
+  .scale button {
+    border: 2px solid var(--line); background: var(--card); color: var(--text); border-radius: 14px;
+    height: 60px; font: inherit; font-size: 1.25rem; font-weight: 700; cursor: pointer;
+  }
+  .scale button.sel { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .scale-labels { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-top: 6px; }
+  .opt {
+    display: block; width: 100%; text-align: left; border: 2px solid var(--line); background: var(--card); color: var(--text);
+    border-radius: 14px; padding: 14px 16px; font: inherit; font-size: 1rem; cursor: pointer; margin-bottom: 10px;
+  }
+  .opt b { color: var(--accent); margin-right: 6px; }
+  .opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* results */
+  .hero { text-align: center; padding: 26px 20px; }
+  .hero .num { width: 84px; height: 84px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: 2.6rem; font-weight: 800; display: grid; place-items: center; margin: 0 auto 12px; }
+  .hero h2 { font-size: 1.5rem; margin-bottom: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+  .chip { background: var(--accent-soft); border-radius: 99px; padding: 4px 12px; font-size: .88rem; }
+  .bars { display: grid; gap: 8px; }
+  .bar-row { display: grid; grid-template-columns: 1.8em 1fr 2.6em; align-items: end; gap: 8px; font-size: .92rem; }
+  .bar-row b, .bar-row span.v { line-height: 12px; }
+  .bar-row .lbl { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 3px; }
+  .bar { height: 12px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar div { height: 100%; background: var(--bar-dim); border-radius: 99px; }
+  .bar-row.top .bar div { background: var(--bar); }
+  .bar-row b { text-align: center; }
+  .bar-row span.v { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 14px; padding: 12px 14px; font-size: .92rem; margin-bottom: 8px; }
+  dl { display: grid; gap: 10px; }
+  dt { font-weight: 700; font-size: .9rem; color: var(--accent); }
+  dd { margin: 0; }
+  details { border-top: 1px solid var(--line); padding: 12px 0; }
+  details:last-child { padding-bottom: 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  summary::after { content: "+"; color: var(--accent); font-weight: 700; }
+  details[open] summary::after { content: "–"; }
+  details dl { margin-top: 10px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ÚVOD -->
+  <section id="s-intro">
+    <div class="card">
+      <h1>Enneagram – orientační test</h1>
+      <p>Enneagram popisuje devět typů osobnosti podle toho, <b>co nás vnitřně pohání</b> a čeho se obáváme.</p>
+      <p>Test má <b>2 rychlé otázky</b> a <b>108 krátkých výroků</b>. Trvá asi 15 minut. Postup se průběžně ukládá jen v tomto zařízení, takže můžeš kdykoli přestat a pokračovat později.</p>
+      <p class="muted">Odpovídej podle toho, jak se chováš a prožíváš věci <b>většinu života</b>, ne podle toho, jak bys chtěl/a být. Nepřemýšlej dlouho, první odpověď bývá nejpřesnější.</p>
+    </div>
+    <button class="btn" id="b-start">Začít test</button>
+    <button class="btn secondary hidden" id="b-continue">Pokračovat v rozpracovaném testu</button>
+    <button class="btn secondary hidden" id="b-show">Zobrazit poslední výsledek</button>
+    <p class="muted" style="margin-top:18px">Test je původní a nevalidovaný nástroj k sebereflexi, nikoli psychologická diagnostika.</p>
+  </section>
+
+  <!-- OTÁZKY -->
+  <section id="s-quiz" class="hidden">
+    <div class="top">
+      <button class="back" id="b-back" aria-label="Předchozí otázka">‹</button>
+      <div class="progress" aria-hidden="true"><div id="prog"></div></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="card">
+      <div class="section" id="q-section"></div>
+      <div id="q-body"></div>
+    </div>
+    <button class="btn ghost" id="b-pause">Přerušit a pokračovat později</button>
+  </section>
+
+  <!-- VÝSLEDEK -->
+  <section id="s-result" class="hidden">
+    <div class="card hero">
+      <div class="num" id="r-num"></div>
+      <div class="muted">Nejvyšší skóre</div>
+      <h2 id="r-name"></h2>
+      <div class="muted" id="r-tag"></div>
+      <div class="chips" id="r-chips"></div>
+    </div>
+    <div id="r-warn"></div>
+    <div class="card">
+      <h2>Tvůj typ v kostce</h2>
+      <dl id="r-detail"></dl>
+    </div>
+    <div class="card">
+      <h2>Skóre všech typů</h2>
+      <div class="bars" id="r-bars"></div>
+      <p class="muted" style="margin-top:10px">Průměr odpovědí 1–5. Ostatní vysoko postavené typy si přečti níže – může jít o tvůj skutečný typ, křídlo nebo chování ve stresu.</p>
+    </div>
+    <div class="card">
+      <h2>Instinkty</h2>
+      <div class="bars" id="r-inst"></div>
+      <p class="muted" style="margin-top:10px" id="r-inst-note"></p>
+    </div>
+    <div class="card">
+      <h2>Ověř si to</h2>
+      <p>Výsledek dotazníku je <b>hypotéza</b>. Přečti si popisy 2–3 nejvyšších typů a zeptej se: <i>„Který z nich popisuje, proč dělám, co dělám – a čeho se nejvíc bojím?“</i> Rozhoduje motivace, ne chování.</p>
+      <div id="r-others"></div>
+    </div>
+    <button class="btn" id="b-copy">Zkopírovat výsledek</button>
+    <button class="btn secondary" id="b-again">Udělat test znovu</button>
+    <p class="muted" style="margin-top:18px">Enneagram je nástroj k sebepoznání, ne diagnóza. Pokud ti je psychicky těžko, obrať se na odborníka nebo na Linku první psychické pomoci 116 123.</p>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = /*DATA*/{"nazev":"Enneagram – orientační dotazník","verze":"1.0","jazyk":"cs","poznamka":"Původní, nevalidovaný dotazník k sebereflexi. Nejde o diagnostiku.","instrukce":"Odpovídej podle toho, jak se chováš a prožíváš věci většinu života (zhruba od 20 let), ne podle toho, jak bys chtěl/a být nebo jak je to zrovna teď. Nepřemýšlej příliš dlouho.","skala":{"1":"vůbec neplatí","2":"spíše neplatí","3":"napůl","4":"spíše platí","5":"zcela platí"},"cast_a":[{"id":"R1","osa":"hornevian","otazka":"Jak obvykle jdeš za tím, co chceš nebo potřebuješ?","moznosti":[{"kod":"A","skupina":"asertivni","typy":[3,7,8],"text":"Jdu si za tím přímo. Jednám, prosazuji se, beru si prostor a očekávám, že se věci pohnou."},{"kod":"B","skupina":"vyhovujici","typy":[1,2,6],"text":"Snažím se dělat to, co je správné a co se ode mě čeká. Plním závazky a odpovědnost a věřím, že se mi to vrátí."},{"kod":"C","skupina":"stazeni","typy":[4,5,9],"text":"Nejdřív se stáhnu do sebe a věci zpracuji uvnitř. Potřebuji prostor a čas, než se zapojím."}]},{"id":"R2","osa":"harmonicka","otazka":"Jak obvykle reaguješ, když se něco pokazí nebo přijde konflikt?","moznosti":[{"kod":"A","skupina":"pozitivni","typy":[2,7,9],"text":"Snažím se udržet dobrou náladu, vidět světlou stránku a nezatěžovat ostatní. Těžké pocity raději neřeším."},{"kod":"B","skupina":"kompetencni","typy":[1,3,5],"text":"Odložím emoce stranou a řeším problém věcně, logicky a efektivně. Pocity mohou počkat."},{"kod":"C","skupina":"reaktivni","typy":[4,6,8],"text":"Reaguji emočně a potřebuji, aby druzí moje pocity vzali vážně a reagovali, než se pohneme dál."}]}],"cast_b":[{"id":"B01","typ":4,"text":"Často mám pocit, že mi chybí něco, co ostatní mají."},{"id":"B02","typ":7,"text":"Mám v hlavě spoustu plánů a nápadů a těžko si mezi nimi vybírám."},{"id":"B03","typ":5,"text":"Čas o samotě je pro mě nezbytný k obnovení energie."},{"id":"B04","typ":1,"text":"Když vidím, že se něco dělá špatně, mám silnou potřebu to napravit."},{"id":"B05","typ":9,"text":"Konflikty se snažím uklidnit nebo se jim vyhnout."},{"id":"B06","typ":2,"text":"Snadno vycítím, co druzí potřebují, často dřív než oni sami."},{"id":"B07","typ":3,"text":"Je pro mě důležité podávat výkon a dosahovat cílů."},{"id":"B08","typ":6,"text":"Často předvídám, co by se mohlo pokazit."},{"id":"B09","typ":8,"text":"Říkám věci na rovinu, i když to druhé může zaskočit."},{"id":"B10","typ":3,"text":"Rychle vycítím, co se v dané situaci oceňuje, a umím se tomu přizpůsobit."},{"id":"B11","typ":9,"text":"Snadno vidím pohled všech zúčastněných stran."},{"id":"B12","typ":8,"text":"Nesnesu, když mě někdo ovládá nebo mi diktuje, co mám dělat."},{"id":"B13","typ":4,"text":"Je pro mě zásadní žít v souladu s tím, kdo opravdu jsem."},{"id":"B14","typ":1,"text":"V hlavě mi často běží vnitřní kritik, který hodnotí, co dělám."},{"id":"B15","typ":7,"text":"Když přijde nepříjemný pocit, rychle se přesunu k něčemu příjemnějšímu."},{"id":"B16","typ":5,"text":"Než začnu jednat, chci věci do hloubky pochopit."},{"id":"B17","typ":6,"text":"Než se někomu svěřím, potřebuji si ověřit, že je důvěryhodný."},{"id":"B18","typ":2,"text":"Pomáhat druhým mi dává pocit, že mám své místo."},{"id":"B19","typ":6,"text":"Loajalita k lidem a skupinám, ke kterým patřím, je pro mě zásadní."},{"id":"B20","typ":8,"text":"Když nikdo nepřebírá vedení, rychle ho převezmu."},{"id":"B21","typ":4,"text":"Prožívám emoce intenzivněji než většina lidí kolem mě."},{"id":"B22","typ":5,"text":"Pečlivě si hlídám svůj čas, energii a soukromí."},{"id":"B23","typ":1,"text":"Je pro mě těžké nechat práci „dost dobrou“, když vím, že by mohla být lepší."},{"id":"B24","typ":9,"text":"Často těžko poznávám, co doopravdy chci."},{"id":"B25","typ":2,"text":"Těžko říkám ne, když mě někdo požádá o pomoc."},{"id":"B26","typ":3,"text":"Záleží mi na tom, jakým dojmem působím."},{"id":"B27","typ":7,"text":"Omezování a nuda jsou pro mě těžko snesitelné."},{"id":"B28","typ":9,"text":"Přizpůsobuji se přáním ostatních, aby byl klid."},{"id":"B29","typ":5,"text":"Emoce zpracovávám spíš později, v klidu, než v danou chvíli."},{"id":"B30","typ":1,"text":"Zlost si většinou nedovolím ukázat; spíš se projeví jako podráždění nebo napětí v těle."},{"id":"B31","typ":4,"text":"Přitahuje mě to, co je nedosažitelné nebo vzdálené."},{"id":"B32","typ":6,"text":"Pochybuji o vlastních rozhodnutích a hledám potvrzení od ostatních."},{"id":"B33","typ":8,"text":"Přiznat zranitelnost je pro mě těžké."},{"id":"B34","typ":3,"text":"Pocity si často odkládám na později, aby mi nebránily v práci."},{"id":"B35","typ":2,"text":"O vlastních potřebách se mi mluví těžko."},{"id":"B36","typ":7,"text":"Vidím v životě hlavně možnosti a příležitosti."},{"id":"B37","typ":9,"text":"Důležité úkoly odkládám a věnuji se raději drobnostem nebo rutině."},{"id":"B38","typ":5,"text":"Příliš mnoho požadavků od druhých mě rychle vyčerpá."},{"id":"B39","typ":6,"text":"K autoritám mám dvojaký vztah: hledám u nich oporu, a zároveň jim nedůvěřuji."},{"id":"B40","typ":2,"text":"Zabolí mě, když nikdo neocení, kolik pro druhé dělám."},{"id":"B41","typ":1,"text":"Řídím se tím, co je správné, i když je to pro mě nevýhodné."},{"id":"B42","typ":8,"text":"Chráním lidi, na kterých mi záleží, a zastávám se slabších."},{"id":"B43","typ":3,"text":"Neúspěch beru velmi osobně, jako by vypovídal o mé hodnotě."},{"id":"B44","typ":7,"text":"Závazky mě znervózňují, protože zavírají jiné možnosti."},{"id":"B45","typ":4,"text":"Vadí mi představa obyčejného, zaměnitelného života."},{"id":"B46","typ":3,"text":"Motivuje mě vidět měřitelný pokrok."},{"id":"B47","typ":5,"text":"Ve skupině spíš pozoruji, než se zapojuji."},{"id":"B48","typ":6,"text":"V krizi umím fungovat lépe, než by se dalo čekat."},{"id":"B49","typ":8,"text":"Konflikt mi nevadí; v něm se ukáže, kdo je doopravdy zač."},{"id":"B50","typ":2,"text":"Blízké vztahy s lidmi jsou pro mě to nejdůležitější v životě."},{"id":"B51","typ":9,"text":"Lidé o mně říkají, že je se mnou pohoda."},{"id":"B52","typ":4,"text":"Melancholie má pro mě zvláštní krásu."},{"id":"B53","typ":1,"text":"Vadí mi, když druzí nedodržují pravidla nebo dohody."},{"id":"B54","typ":7,"text":"Umím přerámovat problém tak, aby vypadal pozitivně."},{"id":"B55","typ":3,"text":"Hledám nejefektivnější cestu k výsledku a nesnáším zdržování."},{"id":"B56","typ":7,"text":"Rychle se nadchnu, ale stejně rychle přecházím k dalšímu."},{"id":"B57","typ":4,"text":"Často se srovnávám s druhými a vychází mi z toho, že jsem na tom hůř."},{"id":"B58","typ":6,"text":"Mám ve zvyku mít připravený plán B."},{"id":"B59","typ":9,"text":"Vlastní zlost si dlouho neuvědomuji; pak se může projevit tvrdohlavostí."},{"id":"B60","typ":5,"text":"Chci mít v oblasti, která mě zajímá, skutečně hluboké znalosti."},{"id":"B61","typ":8,"text":"Respektuji lidi, kteří se mi umějí postavit."},{"id":"B62","typ":1,"text":"Odpočinek si často musím nejdřív „zasloužit“ splněním povinností."},{"id":"B63","typ":2,"text":"Umím se přizpůsobit tak, aby mě druzí měli rádi."},{"id":"B64","typ":4,"text":"Potřebuji, aby mě druzí opravdu pochopili, ne jen vyslechli."},{"id":"B65","typ":9,"text":"Pohodlí a příjemná rutina jsou pro mě důležité."},{"id":"B66","typ":8,"text":"Mám hodně energie a jdu do věcí naplno."},{"id":"B67","typ":6,"text":"Když je něco až příliš dobré, hledám, kde je háček."},{"id":"B68","typ":7,"text":"Chci toho v životě zažít co nejvíc."},{"id":"B69","typ":1,"text":"Chyby – své i cizí – si všimnu dřív než toho, co se povedlo."},{"id":"B70","typ":5,"text":"Vystačím si s málem, pokud mám klid a nezávislost."},{"id":"B71","typ":3,"text":"Někdy nevím, kdo jsem bez svých výsledků a rolí."},{"id":"B72","typ":2,"text":"Když moje péče zůstane bez odezvy, cítím křivdu."},{"id":"B73","typ":5,"text":"Vadí mi, když ode mě někdo čeká víc, než chci dát."},{"id":"B74","typ":6,"text":"Bezpečí a jistota jsou pro mě velmi důležité."},{"id":"B75","typ":3,"text":"Uznání a obdiv mě silně motivují."},{"id":"B76","typ":2,"text":"Lidé za mnou přirozeně chodí se svými starostmi."},{"id":"B77","typ":7,"text":"Když se mluví o bolesti, mám tendenci atmosféru odlehčit."},{"id":"B78","typ":1,"text":"Mám jasnou představu o tom, jak by věci měly být."},{"id":"B79","typ":8,"text":"Nespravedlnost ve mně vyvolá okamžitou a silnou reakci."},{"id":"B80","typ":4,"text":"Přirozeně se vyjadřuji skrze estetiku, umění nebo osobní styl."},{"id":"B81","typ":9,"text":"Mám pocit, že na mém názoru tolik nezáleží."},{"id":"B82","typ":8,"text":"Nechci se spoléhat na druhé; raději mám věci pod kontrolou."},{"id":"B83","typ":4,"text":"V něčem zásadním se cítím odlišně od ostatních."},{"id":"B84","typ":2,"text":"Je pro mě důležité, aby mě druzí potřebovali."},{"id":"B85","typ":7,"text":"Na budoucí zážitky se často těším víc, než prožívám ty současné."},{"id":"B86","typ":1,"text":"Cítím osobní odpovědnost za to, aby věci kolem mě byly v pořádku."},{"id":"B87","typ":6,"text":"Úzkost nebo vnitřní neklid jsou mými častými společníky."},{"id":"B88","typ":5,"text":"Přemýšlení v soukromí mi vyhovuje víc než přemýšlení nahlas s ostatními."},{"id":"B89","typ":9,"text":"Dokážu se „ztratit“ v činnostech, které mě uklidňují (seriály, jídlo, koníčky)."},{"id":"B90","typ":3,"text":"Když něco dělám, chci v tom patřit mezi nejlepší."}],"cast_c":[{"id":"C01","instinkt":"sp","text":"Hlídám si zdraví, spánek, jídlo a finanční jistotu."},{"id":"C02","instinkt":"so","text":"Zajímá mě, jaké mám postavení ve skupině nebo komunitě."},{"id":"C03","instinkt":"sx","text":"Vyhledávám intenzivní spojení s jedním člověkem."},{"id":"C04","instinkt":"so","text":"Sleduji, co se děje ve skupinách, kam patřím, a jaké jsou v nich vztahy."},{"id":"C05","instinkt":"sp","text":"Domov a pohodlné zázemí jsou pro mě prioritou."},{"id":"C06","instinkt":"sx","text":"Přitažlivost a chemie mezi lidmi je pro mě silný motor."},{"id":"C07","instinkt":"sx","text":"Když mě něco nebo někdo zaujme, jdu do toho celou bytostí."},{"id":"C08","instinkt":"so","text":"Je pro mě důležité přispívat něčím širšímu celku."},{"id":"C09","instinkt":"sp","text":"Často řeším, zda mám dostatek zdrojů – peněz, času, energie."},{"id":"C10","instinkt":"so","text":"Rychle vnímám nepsaná pravidla a hierarchii."},{"id":"C11","instinkt":"sx","text":"Povrchní rozhovory mě nudí; chci jít do hloubky."},{"id":"C12","instinkt":"sp","text":"Ve stresu nejdřív řeším praktické zajištění."},{"id":"C13","instinkt":"so","text":"Udržování široké sítě kontaktů je pro mě přirozené."},{"id":"C14","instinkt":"sp","text":"Klidný večer doma je pro mě obvykle lepší než společenská akce."},{"id":"C15","instinkt":"sx","text":"Hodně vnímám, jak působím na lidi, kteří mě zajímají."},{"id":"C16","instinkt":"sp","text":"Plánuji dopředu, aby mi nic podstatného nechybělo."},{"id":"C17","instinkt":"so","text":"Vyloučení z kolektivu je pro mě jedna z nejhorších věcí."},{"id":"C18","instinkt":"sx","text":"Vztah bez jiskry je pro mě těžko snesitelný."}]}/*/DATA*/;
+
+const TYPY = {
+ 1: { n: "Reformátor", tag: "Zásadový, pečlivý, idealista", fear: "Být špatný, chybný nebo zkažený.", desire: "Být dobrý, správný a v souladu se svými zásadami.",
+      gifts: "Poctivost, spravedlnost, smysl pro kvalitu, spolehlivost, schopnost zlepšovat svět kolem sebe.",
+      trap: "Vnitřní kritik, potlačená zlost, perfekcionismus, odpočinek až „za zásluhy“.",
+      grow: "Přijmout, že „dost dobré“ je často opravdu dobré. Dovolit si radost a spontánnost.",
+      tip: "Všimni si hlasu vnitřního kritika a pojmenuj ho. Naplánuj si odpočinek, který si nemusíš zasloužit." },
+ 2: { n: "Pomocník", tag: "Vřelý, empatický, štědrý", fear: "Být nechtěný, nemilovaný, nepotřebný.", desire: "Být milován a cítit se blízký a potřebný.",
+      gifts: "Empatie, vřelost, štědrost, schopnost vytvářet vztahy a vidět potřeby druhých.",
+      trap: "Přehlížení vlastních potřeb, pomoc s nevysloveným očekáváním, těžké říkání „ne“.",
+      grow: "Uznat vlastní potřeby a pocity, dávat bez očekávání a umět také přijímat.",
+      tip: "Než pomůžeš, zeptej se: „Chce to ten člověk? A co teď potřebuji já?“ Jednou denně řekni nahlas jednu svou potřebu." },
+ 3: { n: "Úspěšný", tag: "Výkonný, adaptabilní, cílevědomý", fear: "Být bezcenný, bez hodnoty sám o sobě.", desire: "Mít hodnotu, být oceňován a úspěšný.",
+      gifts: "Energie, efektivita, schopnost inspirovat a dotahovat věci do konce.",
+      trap: "Ztotožnění s výkonem a obrazem, odkládání pocitů, workoholismus.",
+      grow: "Zjistit, kdo jsem bez výsledků. Jednat podle vlastních hodnot, ne podle publika.",
+      tip: "Několikrát denně se zastav a zeptej se: „Co teď cítím?“ Zkus den bez měření produktivity." },
+ 4: { n: "Individualista", tag: "Citlivý, tvořivý, hloubavý", fear: "Nemít identitu ani význam, být v jádru vadný.", desire: "Najít sebe, být autentický a hluboce pochopen.",
+      gifts: "Tvořivost, emoční hloubka, autenticita, schopnost doprovázet druhé v bolesti.",
+      trap: "Srovnávání se, pocit, že něco chybí, náladovost a stahování se.",
+      grow: "Vidět hodnotu v přítomném a obyčejném. Jednat i bez „správné nálady“.",
+      tip: "Když se srovnáváš, pojmenuj to: „teď mluví závist“. Každý den si všimni tří věcí, které fungují." },
+ 5: { n: "Pozorovatel", tag: "Přemýšlivý, nezávislý, zvídavý", fear: "Být neschopný, bezmocný nebo zahlcený.", desire: "Být kompetentní, soběstačný a rozumět světu.",
+      gifts: "Hloubka poznání, objektivita, klid v krizi, originální myšlení.",
+      trap: "Stahování do hlavy, šetření časem a energií, odstup od pocitů a lidí.",
+      grow: "Jednat dřív, než se cítím stoprocentně připraven. Sdílet sebe i své poznání.",
+      tip: "Řekni pocit nahlas v okamžiku, kdy vzniká, ne až později. Všímej si svého těla." },
+ 6: { n: "Loajální", tag: "Spolehlivý, ostražitý, oddaný", fear: "Být bez opory, bezpečí a vedení.", desire: "Mít jistotu, bezpečí a důvěryhodnou oporu.",
+      gifts: "Loajalita, zodpovědnost, smysl pro riziko, týmovost, odvaha v krizi.",
+      trap: "Úzkost, pochybnosti, katastrofické scénáře, ambivalence k autoritám.",
+      grow: "Důvěřovat vlastnímu vnitřnímu vedení. Odvaha není absence strachu.",
+      tip: "Rozliš: „je to skutečné riziko, nebo scénář v hlavě?“ Udělej malý krok, aniž by sis ho nechal/a potvrdit." },
+ 7: { n: "Nadšenec", tag: "Optimistický, všestranný, spontánní", fear: "Být uvězněn v bolesti, nudě nebo nedostatku.", desire: "Být spokojený, svobodný a mít možnosti.",
+      gifts: "Radost, nadšení, nápady, schopnost propojovat a vidět příležitosti.",
+      trap: "Roztěkanost, útěk před nepříjemným, přeplánování, potíže se závazky.",
+      grow: "Být přítomen tomu, co je – i tomu těžkému. Dotahovat a prohlubovat.",
+      tip: "Dotáhni jednu věc do konce, než začneš další. Zůstaň 5 minut v nepříjemném pocitu, aniž bys od něj utekl/a." },
+ 8: { n: "Vyzyvatel", tag: "Silný, přímý, ochranitelský", fear: "Být ovládán, zraněn, vydán napospas.", desire: "Chránit sebe i své blízké, mít život ve vlastních rukou.",
+      gifts: "Síla, odvaha, přímost, smysl pro spravedlnost, ochrana slabších.",
+      trap: "Dominance, konfrontace, popírání zranitelnosti, „vše nebo nic“.",
+      grow: "Ukázat měkkost a zranitelnost. Síla, která nepotřebuje vyhrávat.",
+      tip: "Všimni si okamžiku těsně před výbuchem a nadechni se. Ukaž zranitelnost někomu, komu věříš." },
+ 9: { n: "Mírotvůrce", tag: "Klidný, přijímající, smířlivý", fear: "Konflikt, ztráta spojení, oddělení.", desire: "Vnitřní i vnější mír a stabilita.",
+      gifts: "Klid, přijetí, schopnost vidět všechny strany a spojovat lidi.",
+      trap: "Zapomínání na sebe, vyhýbání se konfliktu, odkládání podstatného, pasivní odpor.",
+      grow: "Vědět, co chci, a jednat podle toho. Můj hlas je důležitý.",
+      tip: "Každý den si odpověz na otázku „Co chci já?“. Začni den tím nejdůležitějším, ne drobnostmi." },
+};
+const STRES = {1:4, 4:2, 2:8, 8:5, 5:7, 7:1, 3:9, 9:6, 6:3};
+const RUST = Object.fromEntries(Object.entries(STRES).map(([k, v]) => [v, +k]));
+const CENTRA = { "tělo": [8, 9, 1], "srdce": [2, 3, 4], "hlava": [5, 6, 7] };
+const INST = { sp: "Sebezáchovný", so: "Sociální", sx: "Intimní (one-to-one)" };
+const INST_POPIS = {
+  sp: "zdraví, domov, zdroje, bezpečí a pohodlí",
+  so: "skupina, postavení, příslušnost a přínos celku",
+  sx: "intenzita, přitažlivost a hluboké spojení s jedním člověkem",
+};
+const SCALE = ["vůbec neplatí", "spíše neplatí", "napůl", "spíše platí", "zcela platí"];
+const KEY = "enneagram-v1";
+
+// ---------- stav ----------
+const STEPS = [
+  ...DATA.cast_a.map(q => ({ kind: "a", q })),
+  ...DATA.cast_b.map(q => ({ kind: "b", q })),
+  ...DATA.cast_c.map(q => ({ kind: "c", q })),
+];
+let state = { answers: {}, i: 0, done: false };
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.answers) state = s; } catch (e) {}
+}
+
+const $ = id => document.getElementById(id);
+function show(id) {
+  for (const s of ["s-intro", "s-quiz", "s-result"]) $(s).classList.toggle("hidden", s !== id);
+  window.scrollTo(0, 0);
+}
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
+
+// ---------- dotazník ----------
+function render() {
+  const step = STEPS[state.i];
+  const n = STEPS.length;
+  $("prog").style.width = (state.i / n * 100) + "%";
+  $("count").textContent = `${state.i + 1} / ${n}`;
+  $("b-back").disabled = state.i === 0;
+  const body = $("q-body");
+  body.innerHTML = "";
+  const cur = state.answers[step.q.id];
+
+  if (step.kind === "a") {
+    $("q-section").textContent = "Rychlý test";
+    const h = document.createElement("h2"); h.textContent = step.q.otazka; body.appendChild(h);
+    for (const m of step.q.moznosti) {
+      const b = document.createElement("button");
+      b.className = "opt" + (cur === m.kod ? " sel" : "");
+      b.innerHTML = `<b>${m.kod}</b>`; b.append(m.text);
+      b.onclick = () => answer(m.kod);
+      body.appendChild(b);
+    }
+  } else {
+    $("q-section").textContent = step.kind === "b" ? "Jak moc to o tobě platí?" : "Instinkty – jak moc to o tobě platí?";
+    const st = document.createElement("div"); st.className = "statement"; st.textContent = step.q.text; body.appendChild(st);
+    const sc = document.createElement("div"); sc.className = "scale"; sc.setAttribute("role", "group");
+    for (let v = 1; v <= 5; v++) {
+      const b = document.createElement("button");
+      b.textContent = v; b.setAttribute("aria-label", `${v} – ${SCALE[v - 1]}`);
+      if (cur === v) b.classList.add("sel");
+      b.onclick = () => answer(v);
+      sc.appendChild(b);
+    }
+    body.appendChild(sc);
+    const lb = document.createElement("div"); lb.className = "scale-labels";
+    lb.innerHTML = "<span>vůbec neplatí</span><span>zcela platí</span>";
+    body.appendChild(lb);
+  }
+}
+
+let locked = false;
+function answer(v) {
+  if (locked) return;
+  const step = STEPS[state.i];
+  state.answers[step.q.id] = v;
+  render();
+  locked = true;
+  setTimeout(() => {
+    locked = false;
+    if (state.i < STEPS.length - 1) { state.i++; save(); render(); }
+    else { state.done = true; save(); showResult(); }
+  }, 180);
+  save();
+}
+
+// ---------- vyhodnocení (stejná logika jako scripts/vyhodnot.py) ----------
+const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+const pstdev = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+
+function evaluate(ans) {
+  const warn = [];
+  const vals = {}; for (let t = 1; t <= 9; t++) vals[t] = [];
+  for (const p of DATA.cast_b) if (ans[p.id] != null) vals[p.typ].push(ans[p.id]);
+  const avg = {}; for (let t = 1; t <= 9; t++) avg[t] = vals[t].length ? mean(vals[t]) : 0;
+  const order = Object.keys(avg).map(Number).sort((a, b) => avg[b] - avg[a]);
+  const [top, second] = order;
+  const all = Object.values(vals).flat();
+  const spread = pstdev(Object.values(avg));
+
+  if (avg[top] - avg[second] < 0.3)
+    warn.push(`Typy ${top} a ${second} vyšly téměř stejně. Přečti si oba popisy – rozhodne, která motivace je ti bližší.`);
+  if (spread < 0.35)
+    warn.push("Typy se od sebe málo liší. Zkus test vyplnit znovu a odpovídat podle toho, jak se chováš většinu života, ne jak bys chtěl/a.");
+  if (mean(all) > 4) warn.push("Souhlasíš téměř se vším – výsledek může být méně přesný.");
+  if (mean(all) < 2) warn.push("V málokterém výroku ses poznal/a – výsledek může být méně přesný.");
+  if (second === STRES[top]) warn.push(`Typ ${second} je směr, kam se typ ${top} posouvá ve stresu. Může jít o tvé stresové chování, ne o hlavní typ.`);
+  if (second === RUST[top]) warn.push(`Typ ${second} je směr růstu typu ${top}. Ověř si, který z nich je tvé jádro.`);
+  if (order.slice(0, 3).includes(9) && spread < 0.5)
+    warn.push("Devítky se často poznávají ve všech typech. Pokud ti to sedí, zvaž typ 9.");
+
+  const l = (top + 7) % 9 + 1, r = top % 9 + 1;
+  let wing = null, wingText;
+  if (Math.abs(avg[l] - avg[r]) < 0.2) wingText = "křídla vyvážená";
+  else { wing = avg[l] > avg[r] ? l : r; wingText = `křídlo ${wing} (${top}w${wing})`; }
+
+  const tritype = Object.values(CENTRA).map(ts => ts.reduce((a, b) => avg[a] >= avg[b] ? a : b))
+    .sort((a, b) => avg[b] - avg[a]).join("");
+
+  const iv = { sp: [], so: [], sx: [] };
+  for (const p of DATA.cast_c) if (ans[p.id] != null) iv[p.instinkt].push(ans[p.id]);
+  const inst = {}; for (const k in iv) if (iv[k].length) inst[k] = mean(iv[k]);
+  const stack = Object.keys(inst).length === 3 ? Object.keys(inst).sort((a, b) => inst[b] - inst[a]) : [];
+  if (stack.length && inst[stack[0]] - inst[stack[1]] < 0.25)
+    warn.push(`Instinkty ${INST[stack[0]].toLowerCase()} a ${INST[stack[1]].toLowerCase()} vyšly podobně.`);
+
+  let quick = null, quickRank = null;
+  const opt = (id, k) => { const q = DATA.cast_a.find(x => x.id === id); const m = q && q.moznosti.find(x => x.kod === k); return m ? m.typy : null; };
+  const a1 = opt("R1", ans.R1), a2 = opt("R2", ans.R2);
+  if (a1 && a2) {
+    quick = a1.find(t => a2.includes(t));
+    quickRank = order.indexOf(quick) + 1;
+    if (quickRank > 3) warn.push(`Rychlý test ukázal typ ${quick}, dotazník ho řadí až na ${quickRank}. místo. Přečti si i jeho popis.`);
+  }
+  return { avg, order, top, wing, wingText, tritype, inst, stack, quick, quickRank, warn };
+}
+
+// ---------- výsledek ----------
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function typeDl(t) {
+  const T = TYPY[t];
+  return `<dt>Co tě pohání</dt><dd>${esc(T.desire)}</dd>
+    <dt>Čeho se obáváš</dt><dd>${esc(T.fear)}</dd>
+    <dt>Tvoje dary</dt><dd>${esc(T.gifts)}</dd>
+    <dt>Typické pasti</dt><dd>${esc(T.trap)}</dd>
+    <dt>Ve stresu → ${STRES[t]} · v růstu → ${RUST[t]}</dt><dd>Ve stresu můžeš přebírat méně zdravé rysy typu ${STRES[t]} (${TYPY[STRES[t]].n}), v růstu ty nejlepší z typu ${RUST[t]} (${TYPY[RUST[t]].n}).</dd>
+    <dt>Cesta růstu</dt><dd>${esc(T.grow)}</dd>
+    <dt>Vyzkoušej příští 2 týdny</dt><dd>${esc(T.tip)}</dd>`;
+}
+
+let lastResult = null;
+function showResult() {
+  const r = evaluate(state.answers);
+  lastResult = r;
+  const T = TYPY[r.top];
+  $("r-num").textContent = r.top;
+  $("r-name").textContent = `Typ ${r.top} – ${T.n}`;
+  $("r-tag").textContent = T.tag;
+  const chips = [r.wingText];
+  if (r.stack.length) chips.push(`podtyp ${r.stack[0]}${r.top}`, `instinkty ${r.stack.join("/")}`);
+  chips.push(`tritype ${r.tritype}`);
+  $("r-chips").innerHTML = chips.map(c => `<span class="chip">${esc(c)}</span>`).join("");
+  $("r-warn").innerHTML = r.warn.map(w => `<div class="warn">${esc(w)}</div>`).join("");
+  $("r-detail").innerHTML = typeDl(r.top);
+
+  $("r-bars").innerHTML = r.order.map((t, i) => {
+    const v = r.avg[t];
+    return `<div class="bar-row ${i === 0 ? "top" : ""}"><b>${t}</b><div><span class="lbl">${esc(TYPY[t].n)}</span>
+      <div class="bar"><div style="width:${(v - 1) / 4 * 100}%"></div></div></div><span class="v">${v.toFixed(1)}</span></div>`;
+  }).join("");
+
+  if (r.stack.length) {
+    $("r-inst").innerHTML = r.stack.map((k, i) => `<div class="bar-row ${i === 0 ? "top" : ""}"><b>${k}</b><div><span class="lbl">${INST[k]}</span>
+      <div class="bar"><div style="width:${(r.inst[k] - 1) / 4 * 100}%"></div></div></div><span class="v">${r.inst[k].toFixed(1)}</span></div>`).join("");
+    $("r-inst-note").textContent = `Nejsilnější je ${INST[r.stack[0]].toLowerCase()} instinkt: ${INST_POPIS[r.stack[0]]}. Spojení typu a instinktu (${r.stack[0]}${r.top}) se nazývá podtyp.`;
+  }
+
+  const others = r.order.slice(1, 3);
+  if (r.quick && !r.order.slice(0, 3).includes(r.quick)) others.push(r.quick);
+  $("r-others").innerHTML = others.map(t => `<details><summary>Typ ${t} – ${esc(TYPY[t].n)}</summary><p class="muted" style="margin-top:6px">${esc(TYPY[t].tag)}</p><dl>${typeDl(t)}</dl></details>`).join("");
+  show("s-result");
+}
+
+function resultText(r) {
+  const lines = [
+    `Můj enneagram (orientační test): typ ${r.top} – ${TYPY[r.top].n}, ${r.wingText}`,
+    r.stack.length ? `Instinkty: ${r.stack.join("/")} (podtyp ${r.stack[0]}${r.top}), tritype ${r.tritype}` : `Tritype ${r.tritype}`,
+    "Skóre: " + r.order.map(t => `${t}: ${r.avg[t].toFixed(1)}`).join(", "),
+  ];
+  return lines.join("\n");
+}
+
+// ---------- ovládání ----------
+function start(fresh) {
+  if (fresh) state = { answers: {}, i: 0, done: false };
+  save(); show("s-quiz"); render();
+}
+$("b-start").onclick = () => {
+  if (Object.keys(state.answers).length && !confirm("Začít znovu? Rozpracované odpovědi se smažou.")) return;
+  start(true);
+};
+$("b-continue").onclick = () => start(false);
+$("b-show").onclick = showResult;
+$("b-back").onclick = () => { if (state.i > 0) { state.i--; save(); render(); } };
+$("b-pause").onclick = () => { save(); initIntro(); toast("Postup uložen"); };
+$("b-again").onclick = () => { state = { answers: {}, i: 0, done: false }; save(); start(true); };
+$("b-copy").onclick = async () => {
+  const t = resultText(lastResult);
+  try { await navigator.clipboard.writeText(t); toast("Zkopírováno"); }
+  catch (e) { prompt("Zkopíruj si výsledek:", t); }
+};
+document.addEventListener("keydown", e => {
+  if ($("s-quiz").classList.contains("hidden")) return;
+  const step = STEPS[state.i];
+  if (step.kind === "a" && /^[abc]$/i.test(e.key)) answer(e.key.toUpperCase());
+  else if (step.kind !== "a" && /^[1-5]$/.test(e.key)) answer(+e.key);
+  else if (e.key === "Backspace" || e.key === "ArrowLeft") $("b-back").click();
+});
+
+function initIntro() {
+  const started = Object.keys(state.answers).length > 0;
+  $("b-start").textContent = started ? "Začít znovu" : "Začít test";
+  $("b-continue").classList.toggle("hidden", !started || state.done);
+  $("b-show").classList.toggle("hidden", !state.done);
+  show("s-intro");
+}
+load();
+initIntro();
+</script>
+</body>
+</html>
